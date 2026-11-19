@@ -1,0 +1,176 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Set up Sabaq</title>
+<meta name="description" content="Install Sabaq Study Desk on your phone, tablet or computer.">
+<meta name="theme-color" content="#050C19">
+<link rel="manifest" href="../manifest.webmanifest">
+<link rel="icon" href="../icons/icon-192.png">
+<link rel="apple-touch-icon" href="../icons/icon-180.png">
+<meta name="apple-mobile-web-app-title" content="Sabaq">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:wght@400;700&family=Noto+Naskh+Arabic:wght@400;600&family=Noto+Nastaliq+Urdu:wght@400;600&family=Noto+Sans+Bengali:wght@400;600&family=Noto+Sans+Devanagari:wght@400;600&family=Young+Serif&display=swap">
+<style>
+:root{
+  --desk:#E8ECF3; --sheet:#FFFFFF; --paper:#FCFDFF; --ink:#18202E; --muted:#596377;
+  --rule:#D3DAE6; --pen:#2546C4; --pen-soft:#E3E8FB; --on-pen:#FFFFFF; --ok:#1D7A4B; --ok-soft:#E1F3E9;
+  --font-display:"Young Serif","Noto Naskh Arabic","Noto Sans Devanagari","Noto Sans Bengali",Georgia,serif;
+  --font-body:"Atkinson Hyperlegible","Noto Naskh Arabic","Noto Sans Devanagari","Noto Sans Bengali","PingFang SC","Microsoft YaHei","Noto Sans SC",system-ui,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --desk:#0F131B; --sheet:#171C27; --paper:#1A202D; --ink:#E5E9F1; --muted:#9BA4B6;
+    --rule:#2B3344; --pen:#93A8FF; --pen-soft:#25304D; --on-pen:#0D1430; --ok:#71D59F; --ok-soft:#173627; color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --desk:#0F131B; --sheet:#171C27; --paper:#1A202D; --ink:#E5E9F1; --muted:#9BA4B6;
+  --rule:#2B3344; --pen:#93A8FF; --pen-soft:#25304D; --on-pen:#0D1430; --ok:#71D59F; --ok-soft:#173627; color-scheme:dark;
+}
+[lang="ur"]{--font-body:"Noto Nastaliq Urdu","Noto Naskh Arabic",system-ui,sans-serif;--font-display:var(--font-body);line-height:2.15}
+*,*::before,*::after{box-sizing:border-box}
+[hidden]{display:none !important}
+body{margin:0;background:var(--desk);color:var(--ink);font-family:var(--font-body);line-height:1.55;-webkit-text-size-adjust:100%}
+a{color:var(--pen)}
+.wrap{max-width:880px;margin:0 auto;padding:max(20px,env(safe-area-inset-top)) max(16px,env(safe-area-inset-right)) 48px max(16px,env(safe-area-inset-left));display:grid;gap:18px}
+.langs{display:flex;flex-wrap:wrap;gap:6px;justify-content:flex-end}
+.langs button{font:inherit;font-size:.9rem;border:1px solid var(--rule);background:var(--paper);color:var(--ink);border-radius:999px;padding:3px 11px;cursor:pointer}
+.langs button[aria-pressed="true"]{border-color:var(--pen);background:var(--pen-soft)}
+.card{background:var(--sheet);border:1px solid var(--rule);border-radius:14px;padding:clamp(18px,4vw,32px)}
+.hero{display:grid;justify-items:center;text-align:center;gap:14px}
+.hero img{width:120px;height:120px;border-radius:22%;box-shadow:0 4px 18px rgb(0 0 0 / .22)}
+h1{font-family:var(--font-display);font-weight:400;font-size:clamp(1.9rem,6vw,2.6rem);line-height:1.15;margin:0}
+.lead{margin:0;max-width:52ch;color:var(--muted);font-size:1.05rem}
+.actions{display:flex;flex-wrap:wrap;gap:10px;justify-content:center;align-items:center}
+.primary{font:inherit;font-weight:700;font-size:1.05rem;background:var(--pen);color:var(--on-pen);border:0;border-radius:12px;padding:14px 28px;cursor:pointer;text-decoration:none;display:inline-block}
+.primary:hover{filter:brightness(1.08)}
+.done{margin:0;padding:10px 16px;border-radius:10px;background:var(--ok-soft);color:var(--ok);font-weight:700}
+h2{font-size:.85rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}
+[lang="ar"] h2,[lang="ur"] h2{letter-spacing:0;font-size:.95rem}
+.steps{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,240px),1fr));gap:12px}
+.step{border:1px solid var(--rule);border-radius:12px;padding:16px;background:var(--paper);display:grid;gap:8px;align-content:start}
+.step.mine{border-color:var(--pen);box-shadow:inset 0 0 0 1px var(--pen)}
+.step h3{margin:0;font-size:1.05rem;display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.tag{font-size:.75rem;font-weight:700;background:var(--pen);color:var(--on-pen);border-radius:999px;padding:1px 9px}
+.step ol{margin:0;padding-inline-start:1.3em;display:grid;gap:6px}
+.qr{display:flex;flex-wrap:wrap;align-items:center;gap:18px}
+.qr-code{width:150px;height:150px;flex:none;background:#fff;border-radius:10px;padding:8px;line-height:0}
+.qr-code svg{width:100%;height:100%}
+.qr p{margin:0;flex:1 1 220px}
+.qr .link{display:block;margin-top:6px;font-size:.9rem;overflow-wrap:anywhere;direction:ltr;unicode-bidi:isolate}
+.note{margin:0;color:var(--muted);font-size:.92rem;text-align:center}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <nav class="langs" id="langs" aria-label="Language"></nav>
+
+  <section class="card hero">
+    <img src="../icons/icon-192.png" width="192" height="192" alt="Sabaq logo">
+    <h1 data-t="title"></h1>
+    <p class="lead" data-t="lead"></p>
+    <div class="actions">
+      <button type="button" class="primary" id="installBtn" data-t="install" hidden></button>
+      <a class="primary" id="openBtn" href="../" data-t="open" hidden></a>
+      <a id="browserLink" href="../" data-t="openBrowser"></a>
+    </div>
+    <p class="done" id="doneMsg" role="status" hidden></p>
+  </section>
+
+  <section class="card" aria-labelledby="stepsTitle">
+    <h2 id="stepsTitle" data-t="steps"></h2>
+    <div class="steps" id="steps">
+      <div class="step" data-os="ios">
+        <h3><span data-t="ios"></span></h3>
+        <ol><li data-t="ios1"></li><li data-t="ios2"></li><li data-t="ios3"></li></ol>
+      </div>
+      <div class="step" data-os="android">
+        <h3><span data-t="and"></span></h3>
+        <ol><li data-t="and1"></li><li data-t="and2"></li></ol>
+      </div>
+      <div class="step" data-os="desktop">
+        <h3><span data-t="desk"></span></h3>
+        <ol><li data-t="desk1"></li><li data-t="desk2"></li></ol>
+      </div>
+    </div>
+  </section>
+
+  <section class="card qr">
+    <div class="qr-code" role="img" aria-label="QR code for https://albaraaroury190-tech.github.io/sabaq/setup/"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 35 35" shape-rendering="crispEdges"><path fill="#ffffff" d="M0 0h35v35H0z"/><path stroke="#000000" d="M1 1.5h7m3 0h3m3 0h1m2 0h1m3 0h1m2 0h7M1 2.5h1m5 0h1m2 0h1m1 0h2m2 0h1m2 0h1m1 0h1m1 0h1m1 0h1m1 0h1m5 0h1M1 3.5h1m1 0h3m1 0h1m1 0h4m2 0h1m1 0h1m4 0h4m1 0h1m1 0h3m1 0h1M1 4.5h1m1 0h3m1 0h1m1 0h1m1 0h1m1 0h1m5 0h1m3 0h1m1 0h1m1 0h1m1 0h3m1 0h1M1 5.5h1m1 0h3m1 0h1m1 0h1m3 0h1m1 0h4m2 0h5m1 0h1m1 0h3m1 0h1M1 6.5h1m5 0h1m1 0h2m1 0h1m1 0h2m3 0h2m1 0h1m4 0h1m5 0h1M1 7.5h7m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h1m1 0h7M9 8.5h2m4 0h1m1 0h1m2 0h4m1 0h1M1 9.5h1m1 0h5m5 0h3m2 0h4m1 0h1m3 0h5M1 10.5h3m2 0h1m2 0h1m1 0h4m3 0h1m1 0h1m1 0h1m1 0h1m2 0h2m1 0h4M2 11.5h1m1 0h2m1 0h2m1 0h1m1 0h5m1 0h1m2 0h1m4 0h2m1 0h1m1 0h2M1 12.5h1m1 0h4m1 0h1m2 0h1m1 0h2m1 0h1m1 0h2m2 0h2m1 0h3m1 0h3M1 13.5h1m2 0h1m2 0h3m1 0h1m1 0h1m1 0h1m1 0h1m2 0h1m2 0h1m2 0h1m1 0h3m2 0h1M1 14.5h1m1 0h1m1 0h2m4 0h3m2 0h1m2 0h1m2 0h1m1 0h1m1 0h3m1 0h4M1 15.5h1m2 0h4m2 0h2m1 0h1m2 0h2m1 0h1m1 0h2m3 0h2m1 0h4M2 16.5h1m2 0h1m3 0h1m3 0h1m2 0h1m2 0h5m1 0h3m1 0h3M2 17.5h2m1 0h4m1 0h1m2 0h1m2 0h1m1 0h4m1 0h1m1 0h2m1 0h2m3 0h1M1 18.5h2m1 0h1m1 0h1m10 0h1m1 0h6m2 0h2m1 0h2m1 0h1M1 19.5h2m1 0h1m2 0h2m1 0h2m2 0h1m1 0h2m1 0h1m2 0h2m1 0h1m2 0h2m1 0h2M2 20.5h1m1 0h2m2 0h6m1 0h1m4 0h1m1 0h10M1 21.5h2m2 0h4m3 0h1m1 0h3m2 0h1m3 0h1m1 0h2m1 0h3m1 0h1M1 22.5h1m4 0h1m1 0h1m6 0h4m1 0h1m1 0h3m2 0h1m3 0h1m1 0h1M1 23.5h1m2 0h2m1 0h1m1 0h3m1 0h1m11 0h1m6 0h1M1 24.5h1m1 0h1m1 0h1m2 0h1m1 0h3m1 0h2m1 0h1m4 0h1m1 0h3m1 0h2m1 0h3M1 25.5h1m1 0h1m3 0h1m1 0h3m2 0h2m2 0h1m2 0h1m1 0h1m1 0h5M9 26.5h3m2 0h1m2 0h2m1 0h3m2 0h1m3 0h1m1 0h3M1 27.5h7m2 0h1m1 0h7m2 0h5m1 0h1m1 0h1m1 0h2M1 28.5h1m5 0h1m1 0h2m2 0h1m2 0h4m1 0h2m1 0h2m3 0h4M1 29.5h1m1 0h3m1 0h1m1 0h2m2 0h5m3 0h1m1 0h1m1 0h6m2 0h1M1 30.5h1m1 0h3m1 0h1m1 0h4m2 0h2m2 0h3m1 0h1m1 0h2m2 0h2m1 0h2M1 31.5h1m1 0h3m1 0h1m1 0h1m2 0h1m1 0h1m1 0h2m3 0h1m1 0h2m2 0h2M1 32.5h1m5 0h1m6 0h3m2 0h1m1 0h3m5 0h3M1 33.5h7m1 0h1m2 0h2m1 0h2m1 0h1m2 0h1m1 0h4m1 0h1m3 0h1"/></svg></div>
+    <p><span data-t="qr"></span><a class="link" href="https://albaraaroury190-tech.github.io/sabaq/setup/">albaraaroury190-tech.github.io/sabaq/setup</a></p>
+  </section>
+
+  <p class="note" data-t="note"></p>
+</div>
+
+<script>
+const T = {
+  en:{name:"English",title:"Set up Sabaq",lead:"Put Sabaq on your phone, tablet or computer. It opens like an app, works without internet, and keeps your homework on your device.",install:"Install Sabaq",installed:"Done! Sabaq is on your home screen or in your apps.",already:"Sabaq is already set up on this device.",open:"Open Sabaq",openBrowser:"Or use it in the browser",steps:"How to set it up",ios:"iPhone and iPad",ios1:"Open this page in Safari.",ios2:"Tap the Share button (the square with an arrow).",ios3:"Tap “Add to Home Screen”, then “Add”.",and:"Android",and1:"Open this page in Chrome.",and2:"Tap “Install Sabaq” above, or open the ⋮ menu and choose “Install app” or “Add to Home screen”.",desk:"Computer (Chrome or Edge)",desk1:"Click “Install Sabaq” above, or the install icon at the end of the address bar.",desk2:"Sabaq then opens in its own window and sits with your other apps.",qr:"On a computer? Scan this with your phone camera to set Sabaq up on your phone.",note:"Your homework list, schedule, daily goals and focus timer all work here. Answers from Claude, study plans, flashcards and quizzes work in the Claude version.",mine:"Your device"},
+  ar:{name:"العربية",title:"ثبّت Sabaq",lead:"ضع Sabaq على هاتفك أو جهازك اللوحي أو حاسوبك. يفتح مثل التطبيق، ويعمل بدون إنترنت، ويحفظ واجباتك على جهازك.",install:"ثبّت Sabaq",installed:"تم! ستجد Sabaq على الشاشة الرئيسية أو بين تطبيقاتك.",already:"Sabaq مثبّت بالفعل على هذا الجهاز.",open:"افتح Sabaq",openBrowser:"أو استخدمه في المتصفح",steps:"طريقة التثبيت",ios:"آيفون وآيباد",ios1:"افتح هذه الصفحة في Safari.",ios2:"اضغط زر المشاركة (المربع مع السهم).",ios3:"اضغط «إضافة إلى الشاشة الرئيسية» ثم «إضافة».",and:"أندرويد",and1:"افتح هذه الصفحة في Chrome.",and2:"اضغط «ثبّت Sabaq» في الأعلى، أو افتح القائمة ⋮ واختر «تثبيت التطبيق» أو «إضافة إلى الشاشة الرئيسية».",desk:"الحاسوب (Chrome أو Edge)",desk1:"انقر «ثبّت Sabaq» في الأعلى، أو أيقونة التثبيت في طرف شريط العنوان.",desk2:"بعدها يفتح Sabaq في نافذته الخاصة ويظهر مع تطبيقاتك الأخرى.",qr:"على الحاسوب؟ امسح هذا الرمز بكاميرا هاتفك لتثبيت Sabaq على هاتفك.",note:"قائمة الواجبات والجدول والأهداف اليومية ومؤقّت التركيز كلها تعمل هنا. أما إجابات Claude وخطط الدراسة والبطاقات والاختبارات فتعمل في نسخة Claude.",mine:"جهازك"},
+  es:{name:"Español",title:"Instala Sabaq",lead:"Pon Sabaq en tu móvil, tableta u ordenador. Se abre como una app, funciona sin internet y guarda tus tareas en tu dispositivo.",install:"Instalar Sabaq",installed:"¡Listo! Sabaq está en tu pantalla de inicio o con tus apps.",already:"Sabaq ya está instalada en este dispositivo.",open:"Abrir Sabaq",openBrowser:"O úsala en el navegador",steps:"Cómo instalarla",ios:"iPhone y iPad",ios1:"Abre esta página en Safari.",ios2:"Toca el botón Compartir (el cuadrado con una flecha).",ios3:"Toca «Añadir a pantalla de inicio» y luego «Añadir».",and:"Android",and1:"Abre esta página en Chrome.",and2:"Toca «Instalar Sabaq» arriba, o abre el menú ⋮ y elige «Instalar aplicación» o «Añadir a pantalla de inicio».",desk:"Ordenador (Chrome o Edge)",desk1:"Haz clic en «Instalar Sabaq» arriba, o en el icono de instalar al final de la barra de direcciones.",desk2:"Sabaq se abrirá en su propia ventana, junto a tus otras apps.",qr:"¿Estás en un ordenador? Escanea esto con la cámara del móvil para instalar Sabaq en tu móvil.",note:"La lista de tareas, el calendario, las metas del día y el temporizador funcionan aquí. Las respuestas de Claude, los planes de estudio, las tarjetas y los cuestionarios funcionan en la versión de Claude.",mine:"Tu dispositivo"},
+  ur:{name:"اردو",title:"Sabaq انسٹال کریں",lead:"Sabaq کو اپنے فون، ٹیبلٹ یا کمپیوٹر پر رکھیں۔ یہ ایپ کی طرح کھلتا ہے، انٹرنیٹ کے بغیر چلتا ہے، اور آپ کا ہوم ورک آپ کے آلے پر محفوظ رکھتا ہے۔",install:"Sabaq انسٹال کریں",installed:"ہو گیا! Sabaq آپ کی ہوم اسکرین یا ایپس میں موجود ہے۔",already:"Sabaq اس آلے پر پہلے سے انسٹال ہے۔",open:"Sabaq کھولیں",openBrowser:"یا اسے براؤزر میں استعمال کریں",steps:"انسٹال کرنے کا طریقہ",ios:"آئی فون اور آئی پیڈ",ios1:"یہ صفحہ Safari میں کھولیں۔",ios2:"شیئر بٹن دبائیں (تیر والا چوکور)۔",ios3:"«Add to Home Screen» دبائیں، پھر «Add»۔",and:"اینڈرائیڈ",and1:"یہ صفحہ Chrome میں کھولیں۔",and2:"اوپر «Sabaq انسٹال کریں» دبائیں، یا ⋮ مینو کھول کر «Install app» یا «Add to Home screen» چنیں۔",desk:"کمپیوٹر (Chrome یا Edge)",desk1:"اوپر «Sabaq انسٹال کریں» پر کلک کریں، یا ایڈریس بار کے آخر میں انسٹال کے نشان پر۔",desk2:"پھر Sabaq اپنی الگ ونڈو میں کھلے گا اور آپ کی دوسری ایپس کے ساتھ نظر آئے گا۔",qr:"کمپیوٹر پر ہیں؟ اپنے فون پر Sabaq انسٹال کرنے کے لیے فون کے کیمرے سے یہ کوڈ اسکین کریں۔",note:"ہوم ورک کی فہرست، شیڈول، روزانہ کے اہداف اور فوکس ٹائمر یہاں کام کرتے ہیں۔ Claude کے جوابات، مطالعے کے منصوبے، فلیش کارڈز اور کوئز Claude والے ورژن میں کام کرتے ہیں۔",mine:"آپ کا آلہ"},
+  hi:{name:"हिन्दी",title:"Sabaq इंस्टॉल करें",lead:"Sabaq को अपने फ़ोन, टैबलेट या कंप्यूटर पर रखें। यह ऐप की तरह खुलता है, बिना इंटरनेट के चलता है और आपका होमवर्क आपके डिवाइस पर रखता है।",install:"Sabaq इंस्टॉल करें",installed:"हो गया! Sabaq आपकी होम स्क्रीन या ऐप्स में है।",already:"Sabaq इस डिवाइस पर पहले से इंस्टॉल है।",open:"Sabaq खोलें",openBrowser:"या इसे ब्राउज़र में इस्तेमाल करें",steps:"इंस्टॉल कैसे करें",ios:"iPhone और iPad",ios1:"यह पेज Safari में खोलें।",ios2:"शेयर बटन दबाएँ (तीर वाला चौकोर)।",ios3:"“Add to Home Screen” दबाएँ, फिर “Add”।",and:"Android",and1:"यह पेज Chrome में खोलें।",and2:"ऊपर “Sabaq इंस्टॉल करें” दबाएँ, या ⋮ मेनू खोलकर “Install app” या “Add to Home screen” चुनें।",desk:"कंप्यूटर (Chrome या Edge)",desk1:"ऊपर “Sabaq इंस्टॉल करें” पर क्लिक करें, या एड्रेस बार के आख़िर में इंस्टॉल आइकन पर।",desk2:"फिर Sabaq अपनी अलग विंडो में खुलेगा और आपके बाक़ी ऐप्स के साथ दिखेगा।",qr:"कंप्यूटर पर हैं? अपने फ़ोन पर Sabaq इंस्टॉल करने के लिए फ़ोन के कैमरे से इसे स्कैन करें।",note:"होमवर्क सूची, समय-सारणी, रोज़ के लक्ष्य और फ़ोकस टाइमर यहाँ काम करते हैं। Claude के उत्तर, पढ़ाई की योजना, फ़्लैशकार्ड और क्विज़ Claude वाले संस्करण में काम करते हैं।",mine:"आपका डिवाइस"},
+  bn:{name:"বাংলা",title:"Sabaq ইনস্টল করুন",lead:"Sabaq আপনার ফোন, ট্যাবলেট বা কম্পিউটারে রাখুন। এটি অ্যাপের মতো খোলে, ইন্টারনেট ছাড়াই চলে এবং আপনার হোমওয়ার্ক আপনার ডিভাইসেই রাখে।",install:"Sabaq ইনস্টল করুন",installed:"হয়ে গেছে! Sabaq আপনার হোম স্ক্রিনে বা অ্যাপের তালিকায় আছে।",already:"এই ডিভাইসে Sabaq আগেই ইনস্টল করা আছে।",open:"Sabaq খুলুন",openBrowser:"অথবা ব্রাউজারেই ব্যবহার করুন",steps:"কীভাবে ইনস্টল করবেন",ios:"iPhone ও iPad",ios1:"এই পৃষ্ঠাটি Safari-তে খুলুন।",ios2:"শেয়ার বোতামে চাপুন (তীরসহ চৌকো)।",ios3:"“Add to Home Screen” চাপুন, তারপর “Add”।",and:"Android",and1:"এই পৃষ্ঠাটি Chrome-এ খুলুন।",and2:"উপরের “Sabaq ইনস্টল করুন” চাপুন, অথবা ⋮ মেনু খুলে “Install app” বা “Add to Home screen” বেছে নিন।",desk:"কম্পিউটার (Chrome বা Edge)",desk1:"উপরের “Sabaq ইনস্টল করুন”-এ ক্লিক করুন, অথবা ঠিকানা বারের শেষে ইনস্টল আইকনে।",desk2:"এরপর Sabaq নিজের আলাদা উইন্ডোতে খুলবে এবং আপনার অন্য অ্যাপগুলোর সঙ্গে থাকবে।",qr:"কম্পিউটারে আছেন? ফোনে Sabaq ইনস্টল করতে ফোনের ক্যামেরা দিয়ে এটি স্ক্যান করুন।",note:"হোমওয়ার্কের তালিকা, সময়সূচি, দৈনিক লক্ষ্য ও ফোকাস টাইমার এখানে কাজ করে। Claude-এর উত্তর, পড়ার পরিকল্পনা, ফ্ল্যাশকার্ড ও কুইজ Claude সংস্করণে কাজ করে।",mine:"আপনার ডিভাইস"},
+  fr:{name:"Français",title:"Installer Sabaq",lead:"Mets Sabaq sur ton téléphone, ta tablette ou ton ordinateur. Elle s'ouvre comme une appli, marche sans internet et garde tes devoirs sur ton appareil.",install:"Installer Sabaq",installed:"C'est fait ! Sabaq est sur ton écran d'accueil ou avec tes applis.",already:"Sabaq est déjà installée sur cet appareil.",open:"Ouvrir Sabaq",openBrowser:"Ou utilise-la dans le navigateur",steps:"Comment l'installer",ios:"iPhone et iPad",ios1:"Ouvre cette page dans Safari.",ios2:"Touche le bouton Partager (le carré avec une flèche).",ios3:"Touche « Sur l'écran d'accueil », puis « Ajouter ».",and:"Android",and1:"Ouvre cette page dans Chrome.",and2:"Touche « Installer Sabaq » ci-dessus, ou ouvre le menu ⋮ et choisis « Installer l'application » ou « Ajouter à l'écran d'accueil ».",desk:"Ordinateur (Chrome ou Edge)",desk1:"Clique sur « Installer Sabaq » ci-dessus, ou sur l'icône d'installation au bout de la barre d'adresse.",desk2:"Sabaq s'ouvre alors dans sa propre fenêtre, avec tes autres applis.",qr:"Sur un ordinateur ? Scanne ce code avec l'appareil photo de ton téléphone pour y installer Sabaq.",note:"La liste des devoirs, le planning, les objectifs du jour et le minuteur fonctionnent ici. Les réponses de Claude, les plans d'étude, les fiches et les quiz fonctionnent dans la version Claude.",mine:"Ton appareil"},
+  zh:{name:"中文",title:"安装 Sabaq",lead:"把 Sabaq 装到你的手机、平板或电脑上。它像应用一样打开，没有网络也能用，作业保存在你的设备上。",install:"安装 Sabaq",installed:"完成！Sabaq 已在你的主屏幕或应用列表中。",already:"这台设备上已经安装了 Sabaq。",open:"打开 Sabaq",openBrowser:"或者在浏览器中使用",steps:"安装方法",ios:"iPhone 和 iPad",ios1:"在 Safari 中打开此页面。",ios2:"点按“分享”按钮（带箭头的方框）。",ios3:"点按“添加到主屏幕”，然后点“添加”。",and:"安卓",and1:"在 Chrome 中打开此页面。",and2:"点按上方的“安装 Sabaq”，或打开 ⋮ 菜单，选择“安装应用”或“添加到主屏幕”。",desk:"电脑（Chrome 或 Edge）",desk1:"点击上方的“安装 Sabaq”，或地址栏右端的安装图标。",desk2:"之后 Sabaq 会在独立窗口中打开，和你的其他应用放在一起。",qr:"在用电脑？用手机相机扫描此码，把 Sabaq 装到手机上。",note:"作业清单、日程、每日目标和专注计时都能在这里使用。Claude 的解答、学习计划、抽认卡和测验需要在 Claude 版本中使用。",mine:"你的设备"}
+};
+const RTL = new Set(["ar","ur"]);
+const store = {
+  get(k){try{return localStorage.getItem("sabaq."+k)}catch(e){return null}},
+  set(k,v){try{localStorage.setItem("sabaq."+k,v)}catch(e){}}
+};
+const $ = id => document.getElementById(id);
+// The same language the app uses on this device, else the browser's
+let lang = store.get("ui");
+if(!T[lang]) lang = (navigator.languages||[navigator.language||"en"]).map(l=>String(l).slice(0,2).toLowerCase()).find(l=>T[l]) || "en";
+
+const ua = navigator.userAgent;
+const os = /iPad|iPhone|iPod/.test(ua) || (/Macintosh/.test(ua) && navigator.maxTouchPoints > 1) ? "ios" : /Android/.test(ua) ? "android" : "desktop";
+const standalone = () => matchMedia("(display-mode: standalone)").matches || navigator.standalone === true;
+let deferred = null, state = standalone() ? "already" : "";
+
+function render(){
+  const s = T[lang], root = document.documentElement;
+  root.lang = lang; root.dir = RTL.has(lang) ? "rtl" : "ltr";
+  document.querySelectorAll("[data-t]").forEach(el => { el.textContent = s[el.dataset.t] });
+  document.title = s.title;
+  document.querySelectorAll("#langs button").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.l === lang)));
+  // Put the steps for this device first and mark them
+  document.querySelectorAll(".step").forEach(step => {
+    const mine = step.dataset.os === os;
+    step.classList.toggle("mine", mine);
+    step.querySelector(".tag")?.remove();
+    if(mine){ const t = document.createElement("span"); t.className = "tag"; t.textContent = s.mine; step.querySelector("h3").append(t); step.parentNode.prepend(step) }
+  });
+  $("installBtn").hidden = !deferred || !!state;
+  $("openBtn").hidden = !state;
+  $("browserLink").hidden = !!state;
+  $("doneMsg").hidden = !state;
+  $("doneMsg").textContent = state ? s[state] : "";
+}
+
+Object.keys(T).forEach(code => {
+  const b = document.createElement("button"); b.type = "button"; b.dataset.l = code; b.lang = code; b.textContent = T[code].name;
+  b.addEventListener("click", () => { lang = code; store.set("ui", code); render() });
+  $("langs").append(b);
+});
+
+addEventListener("beforeinstallprompt", e => { e.preventDefault(); deferred = e; render() });
+addEventListener("appinstalled", () => { deferred = null; state = "installed"; render() });
+$("installBtn").addEventListener("click", async () => {
+  if(!deferred) return;
+  deferred.prompt();
+  const choice = await deferred.userChoice.catch(() => null);
+  deferred = null;
+  if(choice && choice.outcome === "accepted") state = "installed";
+  render();
+});
+
+if("serviceWorker" in navigator) navigator.serviceWorker.register("../sw.js").catch(() => {});
+render();
+</script>
+</body>
+</html>

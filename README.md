@@ -4,6 +4,8 @@ A homework helper for students, with the page in English, العربية, Españ
 
 **Open the app: https://albaraaroury190-tech.github.io/sabaq/**
 
+**Install it on your phone, tablet or computer: https://albaraaroury190-tech.github.io/sabaq/setup/**
+
 ## What works on this website
 
 - Homework list with tickboxes, due dates and reminders
@@ -16,4 +18,6 @@ The AI features (answers, study plans, flashcards, quizzes, read-aloud and voice
 
 ## Files
 
-`index.html` is the whole app in one file, with no build step.
+- `index.html`: the whole app in one file, with no build step
+- `setup/`: the setup page, with an Install button, steps for each device and a QR code
+- `manifest.webmanifest`, `sw.js` and `icons/`: let the app be installed and work offline
