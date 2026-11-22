@@ -27,7 +27,9 @@ export default {
     const used = Number(await (await today.fetch("https://count/")).text());
     if (used > Number(env.MAX_PER_DAY || 250)) return json({ error: "daily_limit" }, 429, cors);
 
-    const messages = input.messages.map(m => ({ role: m.role, content: m.content }));
+    // Open models can slip letters from another alphabet into a word; say plainly which one to use.
+    const script = `Write every word in ${input.lang || "the language the student asks for"}, using only that language's own alphabet. Never mix letters from another alphabet into a word. Numbers, formulas and code stay in standard notation.`;
+    const messages = [{ role: "system", content: script }, ...input.messages.map(m => ({ role: m.role, content: m.content }))];
     if (input.image) {
       const last = messages[messages.length - 1];
       last.content = [{ type: "text", text: last.content }, { type: "image_url", image_url: { url: input.image } }];
@@ -36,6 +38,7 @@ export default {
       messages,
       max_completion_tokens: input.json ? LIMITS.jsonTokens : LIMITS.answerTokens,
       chat_template_kwargs: { enable_thinking: false },
+      temperature: 0.4,
       stream: !input.json,
     };
 
@@ -67,7 +70,8 @@ function clean(body) {
     image = String(body.image);
     if (!/^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(image) || image.length > LIMITS.imageChars) throw new Error("bad");
   }
-  return { messages, image, json: body.json === true };
+  const lang = /^[\p{L} ()-]{2,40}$/u.test(String(body.lang || "")) ? String(body.lang) : "";
+  return { messages, image, lang, json: body.json === true };
 }
 
 // Turns the model's server-sent events into plain text, so the page can show the answer as it arrives.

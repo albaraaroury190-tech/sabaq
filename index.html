@@ -383,7 +383,7 @@ button.wd:hover{border-color:var(--pen)}
     <a href="#schedule" data-i18n="schedule"></a>
     <a href="#ask" data-i18n="navAsk"></a>
     <a href="#tools" data-i18n="navTools"></a>
-    <a href="https://albaraaroury190-tech.github.io/sabaq/setup/" id="installLink" class="install-link" data-i18n="install" hidden></a>
+    <a href="https://sabaq-study.pages.dev/setup/" id="installLink" class="install-link" data-i18n="install" hidden></a>
   </nav>
 
   <section class="reminders" id="reminders" aria-labelledby="remTitle" hidden>
@@ -919,6 +919,31 @@ async function photoData(file){
     return new Promise((ok,fail)=>{const r=new FileReader(); r.onload=()=>ok(r.result); r.onerror=()=>fail({code:"image_rejected"}); r.readAsDataURL(file)});
   }
 }
+// The open model sometimes slips letters from another alphabet into a word (Arabic run into Devanagari, say).
+// Letters from a script the reply language doesn't use are removed: always when they are stuck to the reply's own
+// letters, and everywhere unless the student asked for a translation, which may quote the original. Code is left alone.
+const SCRIPT_OF = {ar:"Arabic",ur:"Arabic",fa:"Arabic",ps:"Arabic",hi:"Devanagari",mr:"Devanagari",bn:"Bengali",pa:"Gurmukhi",
+  ta:"Tamil",te:"Telugu",am:"Ethiopic",zh:"Han",ja:"Han",ko:"Hangul",ru:"Cyrillic"};
+const SCRIPTS = ["Latin","Arabic","Devanagari","Bengali","Gurmukhi","Gujarati","Tamil","Telugu","Kannada","Malayalam","Sinhala","Ethiopic",
+  "Han","Hiragana","Katakana","Hangul","Cyrillic","Thai","Hebrew","Myanmar","Khmer","Georgian","Armenian"];
+function fixScript(text, code, keepWords){
+  const own = SCRIPT_OF[code] || "Latin";
+  const allowed = new Set(["Latin", own].concat(code==="ja" ? ["Hiragana","Katakana"] : []));
+  const foreign = SCRIPTS.filter(s=>!allowed.has(s)).map(s=>"\\p{Script="+s+"}").join("|");
+  const strayRe = new RegExp("(?:"+foreign+")[\\p{M}\\u200c\\u200d]*","gu"), hasStray = new RegExp(foreign,"u");
+  const ownRe = new RegExp("\\p{Script="+own+"}","u");
+  return String(text).split(/(```[\s\S]*?(?:```|$)|`[^`\n]*`)/).map((part,i)=>{
+    if(i%2) return part;
+    return part.replace(/[\p{L}\p{M}\p{N}‌‍]+/gu, w => !hasStray.test(w) || (keepWords && !ownRe.test(w)) ? w : w.replace(strayRe,""))
+      .replace(/[ \t]{2,}/g," ");
+  }).join("");
+}
+function fixAll(v, code){
+  if(typeof v==="string") return fixScript(v, code, false);
+  if(Array.isArray(v)) return v.map(x=>fixAll(x, code));
+  if(v && typeof v==="object"){const o={}; for(const k in v) o[k]=fixAll(v[k], code); return o}
+  return v;
+}
 function webSample(){
   async function post(body, signal){
     let res;
@@ -928,7 +953,9 @@ function webSample(){
     return res;
   }
   const sample=async(turns, opts={})=>{
-    const body={messages:turns.map(m=>({role:m.role,content:String(m.content)}))};
+    const code=$("answerLang").value, task=(document.querySelector('input[name="task"]:checked')||{}).value;
+    const clean=s=>fixScript(s.replace(WEB_CUT,""), code, task==="translate");
+    const body={messages:turns.map(m=>({role:m.role,content:String(m.content)})), lang:langInfo(code)[2]};
     if(opts.images && opts.images[0]) body.image=await photoData(opts.images[0]);
     const res=await post(body, opts.signal);
     const reader=res.body.getReader(), dec=new TextDecoder();
@@ -937,19 +964,21 @@ function webSample(){
       for(;;){
         const {done,value}=await reader.read(); if(done) break;
         text+=dec.decode(value,{stream:true});
-        if(opts.onText) opts.onText({text:text.replace(WEB_CUT,"")});
+        if(opts.onText) opts.onText({text:clean(text)});
       }
-    }catch(e){throw {code: opts.signal && opts.signal.aborted ? "cancelled" : "network", text:text.replace(WEB_CUT,"")}}
-    const truncated=text.includes(WEB_CUT); text=text.replace(WEB_CUT,"");
+    }catch(e){throw {code: opts.signal && opts.signal.aborted ? "cancelled" : "network", text:clean(text)}}
+    const truncated=text.includes(WEB_CUT); text=clean(text);
     if(!text.trim()) throw {code:"generic"};
     return {text, truncated};
   };
   // The model sometimes wraps JSON in a code fence; take the first array or object in its reply.
   sample.json=async(prompt, opts={})=>{
-    const res=await post({json:true,messages:[{role:"user",content:String(prompt)+"\n\nReply with only the JSON, no other text."}]}, opts.signal);
+    const code=$("answerLang").value;
+    const res=await post({json:true,lang:langInfo(code)[2],messages:[{role:"user",content:String(prompt)+"\n\nReply with only the JSON, no other text."}]}, opts.signal);
     const {text}=await res.json();
     const s=String(text||""), at=s.search(/[\[{]/), end=Math.max(s.lastIndexOf("]"),s.lastIndexOf("}"));
-    try{return JSON.parse(s.slice(at,end+1))}catch(e){throw {code:"invalid_json"}}
+    let v; try{v=JSON.parse(s.slice(at,end+1))}catch(e){throw {code:"invalid_json"}}
+    return fixAll(v, code);
   };
   sample.limits=async()=>({images:{}});
   return sample;

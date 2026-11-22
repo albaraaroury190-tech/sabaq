@@ -2,9 +2,9 @@
 
 A homework helper for students, with the page in English, العربية, Español, اردو, हिन्दी, বাংলা, Français and 中文.
 
-**Open the app: https://albaraaroury190-tech.github.io/sabaq/**
+**Open the app: https://sabaq-study.pages.dev**
 
-**Install it on your phone, tablet or computer: https://albaraaroury190-tech.github.io/sabaq/setup/**
+**Install it on your phone, tablet or computer: https://sabaq-study.pages.dev/setup/**
 
 ## What it does
 
@@ -16,6 +16,8 @@ A homework helper for students, with the page in English, العربية, Españ
 - Read-aloud and voice typing, using the browser's own speech features
 
 It is free and needs no account. Your homework stays in your own browser on your device.
+
+The app is hosted on Cloudflare Pages (project `sabaq-study`). This repo holds its source; GitHub Pages also serves a copy at https://albaraaroury190-tech.github.io/sabaq/.
 
 ## The free AI helper
 

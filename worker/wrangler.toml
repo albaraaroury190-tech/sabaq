@@ -23,6 +23,6 @@ new_sqlite_classes = ["DailyCount"]
 
 [vars]
 # Pages allowed to call the helper, comma separated
-ALLOWED_ORIGINS = "https://albaraaroury190-tech.github.io,http://localhost:8080"
+ALLOWED_ORIGINS = "https://sabaq-study.pages.dev,https://albaraaroury190-tech.github.io,http://localhost:8080"
 # Answers for the whole site each day; keeps use inside Workers AI's free daily allowance
 MAX_PER_DAY = "250"
