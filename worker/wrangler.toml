@@ -1,0 +1,28 @@
+name = "sabaq-ai"
+main = "worker.js"
+compatibility_date = "2026-11-01"
+
+[ai]
+binding = "AI"
+
+# 8 questions a minute from one address
+[[ratelimits]]
+name = "PER_IP"
+namespace_id = "2401"
+  [ratelimits.simple]
+  limit = 8
+  period = 60
+
+[[durable_objects.bindings]]
+name = "DAILY"
+class_name = "DailyCount"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["DailyCount"]
+
+[vars]
+# Pages allowed to call the helper, comma separated
+ALLOWED_ORIGINS = "https://albaraaroury190-tech.github.io,http://localhost:8080"
+# Answers for the whole site each day; keeps use inside Workers AI's free daily allowance
+MAX_PER_DAY = "250"

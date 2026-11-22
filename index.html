@@ -862,6 +862,18 @@ const TRANSLATE_UI = {en:"Translate",ar:"ترجم",es:"Traduce",ur:"ترجمہ �
 Object.keys(TRANSLATE_UI).forEach(l=>{UI[l].translate=TRANSLATE_UI[l]});
 const INSTALL_UI = {en:"Install the app",ar:"ثبّت التطبيق",es:"Instala la app",ur:"ایپ انسٹال کریں",hi:"ऐप इंस्टॉल करें",bn:"অ্যাপ ইনস্টল করুন",fr:"Installer l'appli",zh:"安装应用"};
 Object.keys(INSTALL_UI).forEach(l=>{UI[l].install=INSTALL_UI[l]});
+// Messages from the free helper used outside Claude: daily limit reached, no connection
+const WEB_AI_UI = {
+  en:["The free helper has answered as many questions as it can today. Please try again tomorrow.","Couldn't reach the helper. Check your internet connection and try again."],
+  ar:["أجاب المساعد المجاني عن أكبر عدد ممكن من الأسئلة اليوم. حاول مجددًا غدًا.","تعذّر الوصول إلى المساعد. تحقّق من اتصالك بالإنترنت وحاول مجددًا."],
+  es:["El asistente gratuito ya respondió todas las preguntas que puede hoy. Vuelve a intentarlo mañana.","No se pudo conectar con el asistente. Revisa tu conexión a internet e inténtalo de nuevo."],
+  ur:["مفت مددگار آج جتنے سوالوں کے جواب دے سکتا تھا، دے چکا ہے۔ براہ کرم کل دوبارہ کوشش کریں۔","مددگار تک رسائی نہیں ہو سکی۔ اپنا انٹرنیٹ کنکشن دیکھیں اور دوبارہ کوشش کریں۔"],
+  hi:["मुफ़्त सहायक आज जितने सवालों के जवाब दे सकता था, दे चुका है। कृपया कल फिर कोशिश करें।","सहायक तक नहीं पहुँच सके। अपना इंटरनेट कनेक्शन जाँचें और फिर कोशिश करें।"],
+  bn:["বিনামূল্যের সহকারী আজ যত প্রশ্নের উত্তর দিতে পারে, দিয়ে ফেলেছে। অনুগ্রহ করে আগামীকাল আবার চেষ্টা করুন।","সহকারীর সঙ্গে যোগাযোগ করা যায়নি। ইন্টারনেট সংযোগ দেখে আবার চেষ্টা করুন।"],
+  fr:["L'assistant gratuit a répondu à toutes les questions possibles aujourd'hui. Réessaie demain.","Impossible de joindre l'assistant. Vérifie ta connexion internet et réessaie."],
+  zh:["免费助手今天能回答的问题已经用完了，请明天再试。","无法连接到助手。请检查网络连接后重试。"]
+};
+Object.keys(WEB_AI_UI).forEach(l=>{UI[l].dailyLimit=WEB_AI_UI[l][0]; UI[l].offline=WEB_AI_UI[l][1]});
 const SUBJECT_EN = {math:"Mathematics",science:"Science",writing:"Language and writing",history:"History and social studies",computing:"Computer science",other:"General"};
 const LEVEL_EN = {primary:"primary school",middle:"middle school",high:"high school",uni:"university"};
 const TASK_RULES = {
@@ -888,8 +900,111 @@ let thread = [], turns = [], showingExample = true, busy = false, ctl = null;
 let photoFile = null, photoURL = "", speaking = false, tts = null, unavailable = false;
 const t = k => (UI[ui][k] ?? UI.en[k]);
 
-const samplePromise = (window.claude && claude.use) ? claude.use("sample").catch(()=>null) : Promise.resolve(null);
-const ttsPromise = (window.claude && claude.use) ? claude.use("tts").catch(()=>null) : Promise.resolve(null);
+/* ---------- Outside Claude: the website and the installed app ----------
+   Answers come from Sabaq's free helper (an open model on Cloudflare Workers AI), and reading aloud and
+   voice typing use the browser's own speech features. Each stands in for the Claude capability of the same shape. */
+const IN_CLAUDE = !!(window.claude && claude.use);
+const WEB_AI = "https://sabaq-ai.visitready-pay.workers.dev/chat";
+const WEB_CUT = "\u0000cut";
+const SPEECH_LANG = {en:"en-US",ar:"ar-SA",es:"es-ES",ur:"ur-PK",hi:"hi-IN",bn:"bn-BD",fr:"fr-FR",zh:"zh-CN"};
+
+// Photos are shrunk to at most 1600px so they upload quickly.
+async function photoData(file){
+  try{
+    const bmp=await createImageBitmap(file), k=Math.min(1,1600/Math.max(bmp.width,bmp.height));
+    const c=document.createElement("canvas"); c.width=Math.round(bmp.width*k); c.height=Math.round(bmp.height*k);
+    c.getContext("2d").drawImage(bmp,0,0,c.width,c.height);
+    return c.toDataURL("image/jpeg",0.85);
+  }catch(e){
+    return new Promise((ok,fail)=>{const r=new FileReader(); r.onload=()=>ok(r.result); r.onerror=()=>fail({code:"image_rejected"}); r.readAsDataURL(file)});
+  }
+}
+function webSample(){
+  async function post(body, signal){
+    let res;
+    try{res=await fetch(WEB_AI,{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify(body),signal})}
+    catch(e){throw {code: signal && signal.aborted ? "cancelled" : "network"}}
+    if(!res.ok){let code="generic"; try{code=(await res.json()).error||code}catch(e){} throw {code}}
+    return res;
+  }
+  const sample=async(turns, opts={})=>{
+    const body={messages:turns.map(m=>({role:m.role,content:String(m.content)}))};
+    if(opts.images && opts.images[0]) body.image=await photoData(opts.images[0]);
+    const res=await post(body, opts.signal);
+    const reader=res.body.getReader(), dec=new TextDecoder();
+    let text="";
+    try{
+      for(;;){
+        const {done,value}=await reader.read(); if(done) break;
+        text+=dec.decode(value,{stream:true});
+        if(opts.onText) opts.onText({text:text.replace(WEB_CUT,"")});
+      }
+    }catch(e){throw {code: opts.signal && opts.signal.aborted ? "cancelled" : "network", text:text.replace(WEB_CUT,"")}}
+    const truncated=text.includes(WEB_CUT); text=text.replace(WEB_CUT,"");
+    if(!text.trim()) throw {code:"generic"};
+    return {text, truncated};
+  };
+  // The model sometimes wraps JSON in a code fence; take the first array or object in its reply.
+  sample.json=async(prompt, opts={})=>{
+    const res=await post({json:true,messages:[{role:"user",content:String(prompt)+"\n\nReply with only the JSON, no other text."}]}, opts.signal);
+    const {text}=await res.json();
+    const s=String(text||""), at=s.search(/[\[{]/), end=Math.max(s.lastIndexOf("]"),s.lastIndexOf("}"));
+    try{return JSON.parse(s.slice(at,end+1))}catch(e){throw {code:"invalid_json"}}
+  };
+  sample.limits=async()=>({images:{}});
+  return sample;
+}
+function webTTS(){
+  const synth=window.speechSynthesis; if(!synth || !window.SpeechSynthesisUtterance) return null;
+  let handlers=[], state="idle";
+  const set=s=>{state=s; handlers.forEach(h=>h({state}))};
+  return {
+    speak(lines){
+      synth.cancel();
+      return new Promise(done=>{
+        lines.forEach((l,i)=>{
+          const u=new SpeechSynthesisUtterance(l.text); u.lang=SPEECH_LANG[l.language]||l.language||"";
+          if(i===lines.length-1){u.onend=()=>{set("idle");done()}; u.onerror=()=>{set("idle");done()}}
+          synth.speak(u);
+        });
+        set("speaking");
+      });
+    },
+    stop(){synth.cancel(); set("idle")},
+    onState(h){handlers.push(h); return ()=>{handlers=handlers.filter(x=>x!==h)}}
+  };
+}
+function webDictation(){
+  const SR=window.SpeechRecognition||window.webkitSpeechRecognition; if(!SR) return null;
+  let rec=null, partial=[], finals=[], states=[];
+  const emit=(list,e)=>list.forEach(h=>h(e));
+  const on=list=>h=>{list.push(h); return ()=>{const i=list.indexOf(h); if(i>=0) list.splice(i,1)}};
+  return {
+    start(o={}){
+      return new Promise((ok,fail)=>{
+        rec=new SR(); rec.lang=SPEECH_LANG[o.language]||o.language||navigator.language; rec.continuous=true; rec.interimResults=true;
+        rec.onstart=()=>{emit(states,{state:"listening"}); ok()};
+        rec.onresult=e=>{
+          let live="";
+          for(let i=e.resultIndex;i<e.results.length;i++){
+            const r=e.results[i];
+            if(r.isFinal) emit(finals,{text:r[0].transcript.trim()}); else live+=r[0].transcript;
+          }
+          emit(partial,{text:live});
+        };
+        rec.onerror=e=>{const code=e.error==="not-allowed"||e.error==="service-not-allowed"?"not_granted":e.error==="language-not-supported"?"unavailable":"upstream_error"; fail({code})};
+        rec.onend=()=>{rec=null; emit(states,{state:"idle"})};
+        emit(states,{state:"starting"});
+        try{rec.start()}catch(e){fail({code:"upstream_error"})}
+      });
+    },
+    stop(){if(rec) rec.stop(); return Promise.resolve()},
+    onPartial:on(partial), onFinal:on(finals), onState:on(states)
+  };
+}
+const ONLINE_PAGE = /^https?:$/.test(location.protocol);
+const samplePromise = IN_CLAUDE ? claude.use("sample").catch(()=>null) : Promise.resolve(ONLINE_PAGE ? webSample() : null);
+const ttsPromise = IN_CLAUDE ? claude.use("tts").catch(()=>null) : Promise.resolve(webTTS());
 
 /* ---------- Build controls ---------- */
 function chipGroup(el, name, keys, initial){
@@ -991,6 +1106,8 @@ function msgFor(code){
   if(code==="not_granted"||code==="sampling_disabled"||code==="not_declared"||code==="capability_disabled") return t("denied");
   if(code==="rate_limited") return t("rate");
   if(code==="refused") return t("refused");
+  if(code==="daily_limit") return t("dailyLimit");
+  if(code==="network") return t("offline");
   return t("generic");
 }
 
@@ -1342,7 +1459,7 @@ function refreshTimerTasks(){
 
 /* ---------- Voice typing for the question ---------- */
 let dict=null, listening=false, dictBase="", dictLang=true;
-const dictPromise = (window.claude && claude.use) ? claude.use("dictation").catch(()=>null) : Promise.resolve(null);
+const dictPromise = IN_CLAUDE ? claude.use("dictation").catch(()=>null) : Promise.resolve(webDictation());
 dictPromise.then(d=>{
   dict=d; $("micBtn").hidden=!d; if(!d) return;
   d.onPartial(({text})=>{$("question").value=dictBase+text});
