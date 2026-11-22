@@ -11,6 +11,7 @@ A homework helper for students, with the page in English, العربية, Españ
 - Homework list with tickboxes, due dates and reminders
 - A schedule of what is due each day: tap a day to see it and set goals for it
 - Help with any assignment, including from a photo: step by step, hints, check my work, improve, practice, summary or translate
+- An English translation under any answer, or under every answer
 - Study plans, flashcards and quizzes made from a topic or class notes
 - A focus timer with your own focus and break lengths, counting minutes per assignment
 - Read-aloud and voice typing, using the browser's own speech features

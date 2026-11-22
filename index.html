@@ -143,6 +143,15 @@ textarea::placeholder{color:var(--muted);opacity:.8}
 .q p{margin:2px 0 0;font-weight:700;white-space:pre-wrap;overflow-wrap:anywhere}
 .q img{margin-top:8px;max-height:140px;width:auto;border-radius:6px;border:1px solid var(--rule)}
 .a{min-width:0;overflow-wrap:break-word;padding-bottom:6px;border-bottom:1px dashed var(--rule)}
+/* English translation shown under an answer */
+.en-wrap{display:grid;gap:6px;margin-top:-4px;padding:12px 14px;border-radius:10px;background:var(--paper);border-inline-start:3px solid var(--pen)}
+.en-label{margin:0;font-size:.78rem;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--pen)}
+[lang="ar"] .en-label,[lang="ur"] .en-label{letter-spacing:0;font-size:.88rem}
+.en-wrap .a{border-bottom:0;padding-bottom:0}
+.en-wrap .thinking{padding:0}
+.check{display:flex;align-items:center;gap:8px;font-size:.95rem;cursor:pointer;width:fit-content}
+.check[hidden]{display:none}
+.check input{width:18px;height:18px;margin:0;accent-color:var(--pen);flex:none;cursor:pointer}
 .a:last-child{border-bottom:0}
 .a>:first-child{margin-top:0}
 .a p,.a ul,.a ol{margin:0 0 .75em}
@@ -458,6 +467,7 @@ button.wd:hover{border-color:var(--pen)}
           <label class="field"><span data-i18n="level"></span><select id="level"></select></label>
           <label class="field"><span data-i18n="answerIn"></span><select id="answerLang"></select></label>
         </div>
+        <label class="check" id="alsoEnRow"><input type="checkbox" id="alsoEn"><span data-i18n="alsoEn"></span></label>
         <label class="field"><span data-i18n="question"></span><textarea id="question" rows="7" dir="auto"></textarea></label>
         <div class="photo" id="photoField">
           <input type="file" id="photo" accept="image/jpeg,image/png,image/webp,image/gif" class="sr">
@@ -489,6 +499,7 @@ button.wd:hover{border-color:var(--pen)}
         <div class="tools">
           <button type="button" class="tool" id="copyBtn" data-i18n="copy"></button>
           <button type="button" class="tool" id="listenBtn" hidden></button>
+          <button type="button" class="tool" id="enBtn" data-i18n="enTr" hidden></button>
           <button type="button" class="tool" id="newBtn" data-i18n="newQ" hidden></button>
         </div>
       </div>
@@ -874,6 +885,18 @@ const WEB_AI_UI = {
   zh:["免费助手今天能回答的问题已经用完了，请明天再试。","无法连接到助手。请检查网络连接后重试。"]
 };
 Object.keys(WEB_AI_UI).forEach(l=>{UI[l].dailyLimit=WEB_AI_UI[l][0]; UI[l].offline=WEB_AI_UI[l][1]});
+// English translation under answers: button and label, then the "every answer" option
+const EN_TR_UI = {
+  en:["English translation","Add an English translation under each answer"],
+  ar:["الترجمة الإنجليزية","أضف ترجمة إنجليزية تحت كل إجابة"],
+  es:["Traducción al inglés","Añadir una traducción al inglés debajo de cada respuesta"],
+  ur:["انگریزی ترجمہ","ہر جواب کے نیچے انگریزی ترجمہ شامل کریں"],
+  hi:["अंग्रेज़ी अनुवाद","हर उत्तर के नीचे अंग्रेज़ी अनुवाद जोड़ें"],
+  bn:["ইংরেজি অনুবাদ","প্রতিটি উত্তরের নিচে ইংরেজি অনুবাদ যোগ করুন"],
+  fr:["Traduction en anglais","Ajouter une traduction en anglais sous chaque réponse"],
+  zh:["英文翻译","在每个回答下方附上英文翻译"]
+};
+Object.keys(EN_TR_UI).forEach(l=>{UI[l].enTr=EN_TR_UI[l][0]; UI[l].alsoEn=EN_TR_UI[l][1]});
 const SUBJECT_EN = {math:"Mathematics",science:"Science",writing:"Language and writing",history:"History and social studies",computing:"Computer science",other:"General"};
 const LEVEL_EN = {primary:"primary school",middle:"middle school",high:"high school",uni:"university"};
 const TASK_RULES = {
@@ -953,8 +976,9 @@ function webSample(){
     return res;
   }
   const sample=async(turns, opts={})=>{
-    const code=$("answerLang").value, task=(document.querySelector('input[name="task"]:checked')||{}).value;
-    const clean=s=>fixScript(s.replace(WEB_CUT,""), code, task==="translate");
+    const code=opts.lang||$("answerLang").value, task=(document.querySelector('input[name="task"]:checked')||{}).value;
+    const keep=opts.keepWords!==undefined ? opts.keepWords : task==="translate";
+    const clean=s=>fixScript(s.replace(WEB_CUT,""), code, keep);
     const body={messages:turns.map(m=>({role:m.role,content:String(m.content)})), lang:langInfo(code)[2]};
     if(opts.images && opts.images[0]) body.image=await photoData(opts.images[0]);
     const res=await post(body, opts.signal);
@@ -1059,6 +1083,7 @@ $("answerLang").value = langInfo(store.get("answer")||ui)[0];
 $("answerLang").addEventListener("change",e=>{
   const code=e.target.value;
   answerTouched=true; store.set("answer",code);
+  $("alsoEnRow").hidden = code==="en";
   // Choosing one of the page's own languages switches the whole page to it as well.
   if(UI[code] && code!==ui){ui=code; store.set("ui",code); applyUI()}
 });
@@ -1082,6 +1107,7 @@ function applyUI(){
   $("goalText").placeholder = t("goalPh");
   document.querySelectorAll(".lang").forEach(b=>b.setAttribute("aria-pressed",String(b.lang===ui)));
   if(!answerTouched) $("answerLang").value = langInfo(ui)[0];
+  $("alsoEnRow").hidden = $("answerLang").value==="en";
   updateListen();
   render();
   renderHw();
@@ -1120,10 +1146,26 @@ function render(){
         th.innerHTML='<span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>';
         th.append(document.createTextNode(t("thinking"))); page.append(th);
       } else { const a=answerEl(e.text,e.lang); e.el=a; page.append(a) }
+      if(e.role==="assistant" && e.en) page.append(englishEl(e.en));
     });
   }
+  const last=lastEntry();
+  $("enBtn").hidden = showingExample || busy || !last || !last.text || last.lang==="en" || !!last.en;
   $("newBtn").hidden = showingExample || busy;
   $("followForm").hidden = showingExample || busy || !thread.some(e=>e.role==="assistant"&&e.text);
+}
+function lastEntry(){for(let i=thread.length-1;i>=0;i--) if(thread[i].role==="assistant") return thread[i]; return null}
+// The English translation block: a label, then the translation (or the thinking dots while it starts).
+function englishEl(en){
+  const wrap=document.createElement("div"); wrap.className="en-wrap";
+  const label=document.createElement("p"); label.className="en-label"; label.textContent=t("enTr");
+  wrap.append(label);
+  if(en.pending && !en.text){
+    const th=document.createElement("div"); th.className="thinking";
+    th.innerHTML='<span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>';
+    th.append(document.createTextNode(t("thinking"))); wrap.append(th); en.el=null;
+  } else { const a=answerEl(en.text,"en"); a.classList.add("a-en"); en.el=a; wrap.append(a) }
+  return wrap;
 }
 let raf=0;
 function streamUpdate(entry){
@@ -1160,6 +1202,7 @@ function buildPrompt(q){
     "- Use Markdown: short paragraphs, **bold** step titles, numbered or bulleted lists where they help.",
     "- Put every equation, formula, chemical formula and short code expression inside backticks, like `2x + 6 = 14`. Use plain Unicode maths symbols (×, ÷, −, ², √, π, ≤). Never use LaTeX or dollar-sign maths.",
     "- Put longer code in fenced code blocks.",
+    "- Write quotations in "+english+" too, never in another language. When quoting the Quran, give the verse in Arabic"+(code==="ar"?"":" followed by its meaning in "+english)+".",
     "- Match the explanation to the student's level and define any technical word the first time you use it.",
     "- No greeting and no sign-off.",
     "- Unless you were told to give hints only, end with one short line with a bold title that gives a similar practice exercise or a question to check understanding.",
@@ -1191,6 +1234,7 @@ async function run(extra){
     entry.text=res.text;
     turns.push({role:"assistant",content:res.text});
     if(res.truncated) setStatus(t("cut"));
+    if(code!=="en" && $("alsoEn").checked) translateLater=entry;
   }catch(err){
     const c=err && err.code;
     entry.text = c==="refused" ? "" : ((err && err.text) || "");
@@ -1203,7 +1247,43 @@ async function run(extra){
     $("askBtn").disabled=false; $("stopBtn").hidden=true;
     render();
   }
+  if(translateLater){const e=translateLater; translateLater=null; translateEntry(e)}
 }
+
+// An English translation under an answer. It is shown with the answer but kept out of the conversation,
+// so follow-up questions still go on in the answer's language.
+let translateLater=null;
+async function translateEntry(entry){
+  const sample=await samplePromise;
+  if(!sample || busy || !entry.text) return;
+  busy=true; ctl=new AbortController(); setStatus("");
+  $("askBtn").disabled=true; $("stopBtn").hidden=false;
+  entry.en={text:"",pending:true,el:null}; render();
+  const ask=[{role:"user",content:[
+    "Translate the text below into English. Keep the same Markdown layout: headings, bold, lists and paragraphs.",
+    "Translate quotations too. For a verse of the Quran, give its usual English meaning in quotation marks followed by the reference, like (Quran 17:85).",
+    "Keep anything inside backticks exactly as it is. Reply with only the translation, with no note before or after it.",
+    "", '"""', entry.text, '"""'].join("\n")}];
+  const opts={signal:ctl.signal,cache:false,onText:({text})=>{entry.en.text=text;entry.en.pending=false;streamUpdate(entry.en)}};
+  if(!IN_CLAUDE){opts.lang="en"; opts.keepWords=true}
+  try{
+    const res=await sample(ask, opts);
+    entry.en.text=res.text;
+    if(res.truncated) setStatus(t("cut"));
+  }catch(err){
+    const c=err && err.code;
+    if(err && err.text) entry.en.text=err.text; else entry.en=null;
+    if(c!=="cancelled") setStatus(msgFor(c));
+  }finally{
+    if(entry.en) entry.en.pending=false;
+    busy=false; ctl=null;
+    $("askBtn").disabled=false; $("stopBtn").hidden=true;
+    render();
+  }
+}
+$("enBtn").addEventListener("click",()=>{const e=lastEntry(); if(e) translateEntry(e)});
+$("alsoEn").checked = store.get("alsoEn")==="1";
+$("alsoEn").addEventListener("change",()=>store.set("alsoEn",$("alsoEn").checked?"1":"0"));
 
 $("askForm").addEventListener("submit",e=>{
   e.preventDefault();
@@ -1253,12 +1333,15 @@ $("photo").addEventListener("change",e=>{
 $("photoRemove").addEventListener("click",clearPhoto);
 
 /* ---------- Copy & read aloud ---------- */
-function lastAnswer(){const all=$("page").querySelectorAll(".a"); return all[all.length-1]}
+function lastAnswer(){const all=$("page").querySelectorAll(".a:not(.a-en)"); return all[all.length-1]}
+// Copy takes the last answer and, when there is one, its English translation under it.
 $("copyBtn").addEventListener("click",()=>{
   const a=lastAnswer(); if(!a) return;
+  const wrap=a.nextElementSibling && a.nextElementSibling.classList.contains("en-wrap") ? a.nextElementSibling : null;
+  const text=a.innerText+(wrap ? "\n\n"+wrap.innerText : "");
   const done=()=>{$("copyBtn").textContent=t("copied"); setTimeout(()=>{$("copyBtn").textContent=t("copy")},1500)};
-  const select=()=>{const r=document.createRange(); r.selectNodeContents(a); const s=getSelection(); s.removeAllRanges(); s.addRange(r)};
-  try{navigator.clipboard.writeText(a.innerText).then(done,select)}catch(e){select()}
+  const select=()=>{const r=document.createRange(); r.setStartBefore(a); r.setEndAfter(wrap||a); const s=getSelection(); s.removeAllRanges(); s.addRange(r)};
+  try{navigator.clipboard.writeText(text).then(done,select)}catch(e){select()}
 });
 function updateListen(){$("listenBtn").textContent = speaking ? t("stopListen") : t("listen")}
 function chunks(text){
