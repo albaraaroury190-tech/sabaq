@@ -181,6 +181,11 @@ textarea::placeholder{color:var(--muted);opacity:.8}
 .hw{padding:18px clamp(16px,3vw,28px);display:grid;gap:12px}
 .hw-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:6px 16px}
 .count{font-variant-numeric:tabular-nums;color:var(--muted);font-size:.95rem}
+.hw-head-r{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 12px}
+.rep-tag{border-radius:999px;padding:0 9px;font-size:.8rem;font-weight:700;white-space:nowrap;color:var(--margin);border:1px dashed var(--margin)}
+.hw-item.flash{animation:hwflash 1.6s ease-out}
+@keyframes hwflash{0%,40%{background:var(--hi)}100%{background:transparent}}
+@media (prefers-reduced-motion:reduce){.hw-item.flash{animation:none;outline:2px solid var(--hi)}}
 .hw-list{list-style:none;margin:0;padding:0;display:grid}
 .hw-list:empty{display:none}
 .hw-item{
@@ -404,7 +409,7 @@ button.wd:hover{border-color:var(--pen)}
   <section class="sheet hw" id="homework" aria-labelledby="hwTitle">
     <div class="hw-head">
       <h2 id="hwTitle" data-i18n="homework"></h2>
-      <span class="count" id="hwCount"></span>
+      <span class="hw-head-r"><button type="button" class="tool" id="hwDedupe" hidden></button><span class="count" id="hwCount"></span></span>
     </div>
     <ul class="hw-list" id="hwList"></ul>
     <p class="hw-empty" id="hwEmpty" data-i18n="hwEmpty" hidden></p>
@@ -813,6 +818,19 @@ const TM_LEN_UI = {
   hi:["फ़ोकस (मिनट)","ब्रेक (मिनट)"], bn:["ফোকাস (মিনিট)","বিরতি (মিনিট)"],
   fr:["Concentration (minutes)","Repos (minutes)"], zh:["专注（分钟）","休息（分钟）"]
 };
+// Repeated homework strings, in the order of REP_KEYS
+const REP_KEYS = ["hwRepeat","eraseRepeats","hwAlready","hwErased"];
+const REP_UI = {
+  en:["Repeat","Erase repeats","This homework is already on your list.","Repeated homework erased."],
+  ar:["مكرر","احذف المكرر","هذا الواجب موجود في قائمتك بالفعل.","تم حذف الواجبات المكررة."],
+  es:["Repetida","Borrar repetidas","Esta tarea ya está en tu lista.","Se borraron las tareas repetidas."],
+  ur:["دہرایا گیا","دہرائے گئے حذف کریں","یہ ہوم ورک پہلے ہی آپ کی فہرست میں ہے۔","دہرایا گیا ہوم ورک حذف ہو گیا۔"],
+  hi:["दोहराया गया","दोहराए गए हटाएँ","यह होमवर्क पहले से आपकी सूची में है।","दोहराया गया होमवर्क हटा दिया गया।"],
+  bn:["পুনরাবৃত্ত","পুনরাবৃত্তগুলো মুছুন","এই হোমওয়ার্কটি আগে থেকেই আপনার তালিকায় আছে।","পুনরাবৃত্ত হোমওয়ার্ক মুছে ফেলা হয়েছে।"],
+  fr:["En double","Supprimer les doublons","Ce devoir est déjà dans ta liste.","Les devoirs en double ont été supprimés."],
+  zh:["重复","删除重复项","这项作业已在你的清单中。","已删除重复的作业。"]
+};
+Object.keys(REP_UI).forEach(l=>REP_KEYS.forEach((k,i)=>{UI[l][k]=REP_UI[l][i]}));
 Object.keys(TM_LEN_UI).forEach(l=>{UI[l].focusLen=TM_LEN_UI[l][0]; UI[l].brkLen=TM_LEN_UI[l][1]});
 
 // Study tools, study plan and voice typing strings, in the order of STUDY_KEYS
@@ -1734,9 +1752,9 @@ function renderHw(){
   const list=$("hwList"); list.innerHTML="";
   let rtf=null, dtf=null;
   try{rtf=new Intl.RelativeTimeFormat(ui,{numeric:"auto"});dtf=new Intl.DateTimeFormat(ui,{weekday:"short",day:"numeric",month:"short"})}catch(e){}
-  const key=it=>it.due||"9999-99-99";
+  const key=it=>it.due||"9999-99-99", reps=hwRepeats();
   hw.slice().sort((a,b)=>(a.done-b.done)||(key(a)<key(b)?-1:key(a)>key(b)?1:0)||(a.created-b.created)).forEach(it=>{
-    const li=document.createElement("li"); li.className="hw-item"+(it.done?" done":"");
+    const li=document.createElement("li"); li.className="hw-item"+(it.done?" done":""); li.dataset.id=it.id;
     const cb=document.createElement("input"); cb.type="checkbox"; cb.className="hw-chk"; cb.id="hw-"+it.id; cb.checked=it.done;
     cb.addEventListener("change",()=>hwToggle(it,cb.checked));
     const name=document.createElement("label"); name.className="hw-name"; name.htmlFor=cb.id; name.dir="auto"; name.textContent=it.name;
@@ -1751,6 +1769,7 @@ function renderHw(){
       sel.addEventListener("change",()=>hwUpdate(it,{remind:Number(sel.value),snooze:""}));
       due.append(time,pill,sel);
     } else due.textContent=t("noDate");
+    if(reps.has(it)){const r=document.createElement("span"); r.className="rep-tag"; r.textContent=t("hwRepeat"); due.append(r)}
     const help=document.createElement("button"); help.type="button"; help.className="tool hw-help"; help.textContent=t("hwHelp");
     help.addEventListener("click",()=>{
       $("question").value=it.name; store.set("draft",it.name);
@@ -1788,6 +1807,7 @@ function renderHw(){
   $("hwEmpty").hidden = hw.length>0;
   const done=hw.filter(x=>x.done).length;
   $("hwCount").textContent = hw.length ? done+" / "+hw.length+" ✓" : "";
+  $("hwDedupe").hidden = !reps.size; $("hwDedupe").textContent = t("eraseRepeats")+" ("+reps.size+")";
   if(hwMode==="local" && !$("hwNote").classList.contains("warn")) hwNote(t("localNote"));
   renderReminders();
   renderSchedule();
@@ -1971,6 +1991,27 @@ $("dpAddHw").addEventListener("click",()=>{
   $("hwDue").value=selDay;
   $("hwName").scrollIntoView({behavior:"smooth",block:"center"}); $("hwName").focus({preventScroll:true});
 });
+// Homework counts as repeated when its name (ignoring case, spacing, punctuation and Arabic vowel marks) and due date match.
+function hwKey(it){return String(it.name).normalize("NFKC").toLowerCase().replace(/[ً-ٰٟـ]/g,"").replace(/[\s\p{P}]+/gu," ").trim()+"|"+it.due}
+// The copies to erase: in each group keep the one with the most progress (ticked, planned, timed), else the oldest.
+function hwRepeats(){
+  const keep=new Map(), score=x=>(x.done?4:0)+(x.steps.length?2:0)+(x.mins?1:0);
+  hw.forEach(x=>{const k=hwKey(x), b=keep.get(k); if(!b||score(x)>score(b)||(score(x)===score(b)&&x.created<b.created)) keep.set(k,x)});
+  const kept=new Set(keep.values());
+  return new Set(hw.filter(x=>!kept.has(x)));
+}
+function hwEraseRepeats(){
+  const reps=hwRepeats(); if(!reps.size) return;
+  if(hwCol) reps.forEach(it=>hwCol.doc(it.id).delete().catch(hwFail));
+  else {hw=hw.filter(x=>!reps.has(x)); hwLocalSave(); renderHw()}
+  hwNote(t("hwErased"));
+}
+$("hwDedupe").addEventListener("click",hwEraseRepeats);
+function hwFlash(it){
+  const li=[...$("hwList").children].find(x=>x.dataset.id===it.id); if(!li) return;
+  li.classList.remove("flash"); void li.offsetWidth; li.classList.add("flash");
+  li.scrollIntoView({behavior:"smooth",block:"nearest"});
+}
 function hwDelete(it){
   hwNote("");
   if(hwCol){hwCol.doc(it.id).delete().catch(hwFail);return}
@@ -1981,9 +2022,11 @@ $("hwForm").addEventListener("submit",e=>{
   const name=$("hwName").value.trim();
   if(!name){$("hwName").focus();return}
   const item={name, due:ISO.test($("hwDue").value)?$("hwDue").value:"", done:false, created:Date.now(), remind:Number($("hwRemind").value), snooze:""};
+  const same=hw.find(x=>hwKey(x)===hwKey(item));
+  if(same){hwNote(t("hwAlready"),true); hwFlash(same); $("hwName").select(); return}
   hwNote("");
   if(hwCol) hwCol.add(item).catch(hwFail);
-  else {hw.push({id:"l"+item.created.toString(36)+Math.random().toString(36).slice(2,6),...item}); hwLocalSave(); renderHw()}
+  else {hw.push(hwClean("l"+item.created.toString(36)+Math.random().toString(36).slice(2,6),item)); hwLocalSave(); renderHw()}
   $("hwName").value=""; $("hwDue").value=""; $("hwName").focus();
 });
 
