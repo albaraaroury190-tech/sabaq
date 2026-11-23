@@ -906,9 +906,11 @@ const ANSWER_LANGS = [
 const RTL = new Set(["ar","ur","fa","ps"]);
 const SUBJECTS = ["math","science","writing","history","computing","other"];
 const LEVELS = ["primary","middle","high","uni"];
-const TASKS = ["steps","hints","check","improve","practice","summary","translate"];
+const TASKS = ["steps","hints","check","improve","practice","summary","analyze","translate"];
 const TRANSLATE_UI = {en:"Translate",ar:"ترجم",es:"Traduce",ur:"ترجمہ کریں",hi:"अनुवाद करें",bn:"অনুবাদ করুন",fr:"Traduis",zh:"翻译"};
 Object.keys(TRANSLATE_UI).forEach(l=>{UI[l].translate=TRANSLATE_UI[l]});
+const ANALYZE_UI = {en:"Analyse",ar:"حلّل",es:"Analiza",ur:"تجزیہ کریں",hi:"विश्लेषण करें",bn:"বিশ্লেষণ করুন",fr:"Analyse",zh:"分析"};
+Object.keys(ANALYZE_UI).forEach(l=>{UI[l].analyze=ANALYZE_UI[l]});
 const INSTALL_UI = {en:"Install the app",ar:"ثبّت التطبيق",es:"Instala la app",ur:"ایپ انسٹال کریں",hi:"ऐप इंस्टॉल करें",bn:"অ্যাপ ইনস্টল করুন",fr:"Installer l'appli",zh:"安装应用"};
 Object.keys(INSTALL_UI).forEach(l=>{UI[l].install=INSTALL_UI[l]});
 // Messages from the free helper used outside Claude: daily limit reached, no connection
@@ -943,6 +945,7 @@ const TASK_RULES = {
   improve:"Give feedback on the student's writing: first 2 or 3 things that work well, then the most important improvements (grammar, structure, clarity, argument) with short before/after examples. Then give a corrected version that keeps the student's own ideas and voice.",
   practice:"Write 5 practice questions on this topic, from easier to harder, at the student's level. Put the answers, each with a one-line explanation, in a separate section at the end.",
   summary:"Summarise the text or topic clearly: the main idea in one sentence, then the key points as a bulleted list, then key terms with short definitions.",
+  analyze:"Analyse what the student gave (a text, picture, chart, data, experiment or problem) under clear headings. Start with what it is and its main idea or purpose. Break it into its parts and explain how they connect. Then go deeper: for a literary, historical or religious text, its themes, language, style and context, backed by short quotes; for a chart, data or an experiment, the trends, comparisons and what they show, with figures; for a problem, what is given, what is asked and which concepts and methods it needs. Note any strengths, weaknesses or open questions, and finish with a short conclusion on what it shows and why it matters.",
   translate:"Translate the student's text into the reply language. Give the complete translation first, keeping the meaning, tone and layout. Then add a short list of tricky words or phrases, each with its meaning and why it was translated that way. Do not add a practice exercise."
 };
 
