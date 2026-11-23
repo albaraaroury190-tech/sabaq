@@ -166,12 +166,7 @@ textarea::placeholder{color:var(--muted);opacity:.8}
 .a th,.a td{border:1px solid var(--rule);padding:6px 10px;text-align:start}
 .a blockquote{margin:0 0 .75em;padding-inline-start:12px;border-inline-start:3px solid var(--rule);color:var(--muted)}
 .a .ayah{font-family:"Noto Naskh Arabic",serif;font-size:1.2em;line-height:2;color:var(--ink);unicode-bidi:isolate}
-.a blockquote:has(.ayah){border-inline-start-color:var(--ok);background:var(--paper);border-radius:0 8px 8px 0;padding:8px 12px}
-.ayah-ref{white-space:nowrap}
-.ayah-nav{display:inline-flex;gap:4px;margin-inline-start:6px;vertical-align:middle}
-.ayah-nav button{font:inherit;font-size:.75rem;border:1px solid var(--rule);background:var(--sheet);color:var(--muted);border-radius:999px;padding:0 8px;line-height:1.7;cursor:pointer}
-.ayah-nav button:hover{border-color:var(--ok);color:var(--ok)}
-.thinking{display:flex;align-items:center;gap:10px;color:var(--muted);font-style:italic}
+.a blockquote:has(.ayah){border-inline-start-color:var(--ok);background:var(--paper);border-radius:0 8px 8px 0;padding:8px 12px}.thinking{display:flex;align-items:center;gap:10px;color:var(--muted);font-style:italic}
 .dots{display:inline-flex;gap:4px}
 .dots i{width:6px;height:6px;border-radius:50%;background:var(--pen);animation:blink 1.2s infinite ease-in-out}
 .dots i:nth-child(2){animation-delay:.2s}.dots i:nth-child(3){animation-delay:.4s}
@@ -902,12 +897,7 @@ const EN_TR_UI = {
   fr:["Traduction en anglais","Ajouter une traduction en anglais sous chaque réponse"],
   zh:["英文翻译","在每个回答下方附上英文翻译"]
 };
-Object.keys(EN_TR_UI).forEach(l=>{UI[l].enTr=EN_TR_UI[l][0]; UI[l].alsoEn=EN_TR_UI[l][1]});
-// Buttons by a Quran verse in an answer: previous verse, next verse
-const VERSE_NAV_UI = {en:["Previous verse","Next verse"],ar:["الآية السابقة","الآية التالية"],es:["Versículo anterior","Versículo siguiente"],
-  ur:["پچھلی آیت","اگلی آیت"],hi:["पिछली आयत","अगली आयत"],bn:["আগের আয়াত","পরের আয়াত"],fr:["Verset précédent","Verset suivant"],zh:["上一节","下一节"]};
-Object.keys(VERSE_NAV_UI).forEach(l=>{UI[l].prevVerse=VERSE_NAV_UI[l][0]; UI[l].nextVerse=VERSE_NAV_UI[l][1]});
-const SUBJECT_EN = {math:"Mathematics",science:"Science",writing:"Language and writing",history:"History and social studies",computing:"Computer science",other:"General"};
+Object.keys(EN_TR_UI).forEach(l=>{UI[l].enTr=EN_TR_UI[l][0]; UI[l].alsoEn=EN_TR_UI[l][1]});const SUBJECT_EN = {math:"Mathematics",science:"Science",writing:"Language and writing",history:"History and social studies",computing:"Computer science",other:"General"};
 const LEVEL_EN = {primary:"primary school",middle:"middle school",high:"high school",uni:"university"};
 const TASK_RULES = {
   steps:"Explain how to solve it step by step, giving the reasoning for each step, and state the final answer clearly at the end.",
@@ -1131,7 +1121,7 @@ function md(text){
 }
 function answerEl(text, code){
   const a=document.createElement("div"); a.className="a"; a.lang=code; a.dir=RTL.has(code)?"rtl":"ltr";
-  a.innerHTML=md(quranize(text, code)); return verseButtons(a);
+  a.innerHTML=md(quranize(text, code)); return a;
 }
 
 /* ---------- Quran verses ----------
@@ -1144,45 +1134,49 @@ const QURAN_TR = {en:"en.sahih",ur:"ur.jalandhry",hi:"hi.hindi",bn:"bn.bengali",
 const QURAN_RE = /\[\[\s*quran\s*:\s*(\d{1,3})\s*:\s*(\d{1,3})(?:\s*-\s*(\d{1,3}))?\s*(?:\|\s*([^\]|]{0,40}))?\s*\]\]/gi;
 const quranCache = {};  // "2:128|en" -> {ar, tr, name, en} once loaded, "loading" or "failed"
 const quranFound = {};  // "2:128|word" -> the verse near 2:128 that contains the word, or "loading"
-const quranShift = {};  // marker -> verses moved by the student with Previous / Next
-// Previous / Next verse buttons after each verse reference in an answer.
-function verseButtons(root){
-  root.querySelectorAll(".ayah-ref").forEach(ref=>{
-    const m=decodeURIComponent(ref.dataset.q||""); if(!m) return;
-    const nav=document.createElement("span"); nav.className="ayah-nav";
-    [["prevVerse",-1],["nextVerse",1]].forEach(([k,d])=>{
-      const b=document.createElement("button"); b.type="button"; b.textContent=t(k);
-      b.addEventListener("click",()=>{quranShift[m]=(quranShift[m]||0)+d; render()});
-      nav.append(b);
-    });
-    ref.after(nav);
-  });
-  return root;
-}
 let quranRedraw = 0;
 function quranRedrawSoon(){clearTimeout(quranRedraw); quranRedraw=setTimeout(render,30)}
 const quranPlain = t => String(t).replace(/[ؐ-ًؚ-ٰٟۖ-ۭـ]/g,"").replace(/[ٱأإآ]/g,"ا").replace(/ى/g,"ي").replace(/\s+/g," ");
-// Models often know what a verse means better than its number. The marker carries two or three key English words
-// from the verse's meaning; of the verses within 10 of the given number, the one whose Saheeh International
-// translation has the most of those words is used (the nearest one on a tie), or the given verse if none has any.
-function quranFind(s, a, words){
+// Models know what a verse means better than its number. The marker carries the model's guess and two or three key
+// English words from the verse's meaning. The page fetches the real verses around the guess (Saheeh International
+// translation) and asks the model which of them the answer means, given the student's question and the sentence
+// around the marker: picking from real text is far more reliable than recalling a number. If that fails, the verse
+// whose translation has the most of the key words is used, else the guess.
+function quranFind(s, a, words, ctx){
   const key=s+":"+a+"|"+words;
   if(quranFound[key]===undefined){
     quranFound[key]="loading";
-    const stems=String(words).toLowerCase().split(/[^a-z']+/).filter(w=>w.length>2).slice(0,5).map(w=>w.length>4 ? w.replace(/(ing|ed|es|s)$/,"") : w);
-    if(!stems.length){quranFound[key]=a; return a}
-    const from=Math.max(1,a-10);
-    fetch("https://api.alquran.cloud/v1/surah/"+s+"/en.sahih?offset="+(from-1)+"&limit=21").then(r=>r.ok?r.json():Promise.reject())
-      .then(j=>{
-        const scored=j.data.ayahs.map(v=>{const t=v.text.toLowerCase(); return {n:v.numberInSurah, score:stems.filter(w=>new RegExp("\\b"+w).test(t)).length}})
+    const from=Math.max(1,a-5);
+    fetch("https://api.alquran.cloud/v1/surah/"+s+"/en.sahih?offset="+(from-1)+"&limit=11").then(r=>r.ok?r.json():Promise.reject())
+      .then(async j=>{
+        const ayahs=j.data.ayahs, nums=ayahs.map(v=>v.numberInSurah);
+        const stems=String(words).toLowerCase().split(/[^a-z']+/).filter(w=>w.length>2).slice(0,5).map(w=>w.length>4 ? w.replace(/(ing|ed|es|s)$/,"") : w);
+        const scored=ayahs.map(v=>{const t=v.text.toLowerCase(); return {n:v.numberInSurah, score:stems.filter(w=>new RegExp("\\b"+w).test(t)).length}})
           .filter(x=>x.score>0).sort((x,y)=>(y.score-x.score)||(Math.abs(x.n-a)-Math.abs(y.n-a)));
-        quranFound[key]=scored.length ? scored[0].n : a;
+        let pick=scored.length ? scored[0].n : a;
+        const sample=await samplePromise;
+        if(sample && sample.json) try{
+          const v=await sample.json([
+            'A student asked: "'+lastQuestion().slice(0,600)+'"',
+            'An answer quotes a verse of the Quran at this point: "'+ctx+'"',
+            "The answer's guess was surah "+s+", verse "+a+", about: "+words+".",
+            "These are the real verses near that guess (Saheeh International translation):",
+            ...ayahs.map(v=>s+":"+v.numberInSurah+" — "+v.text),
+            "",
+            "The answer's guess may be wrong. Judge by the meaning of the verses: which one of them best matches what the student asked for?",
+            "Reply with only JSON like {\"verse\": "+a+"}."
+          ].join("\n"),{modelTier:"quick",cache:false});
+          const n=Number(v && v.verse);
+          if(nums.includes(n)) pick=n;
+        }catch(e){}
+        quranFound[key]=pick;
       })
       .catch(()=>{quranFound[key]=a})
       .finally(quranRedrawSoon);
   }
   return quranFound[key];
 }
+function lastQuestion(){for(let i=thread.length-1;i>=0;i--) if(thread[i].role==="user") return String(thread[i].text||""); return ""}
 function quranVerse(s, a, code){
   const key=s+":"+a+"|"+code;
   if(quranCache[key]===undefined){
@@ -1201,28 +1195,25 @@ function quranVerse(s, a, code){
   return quranCache[key];
 }
 function quranize(text, code){
-  return String(text).replace(QURAN_RE,(m,s,a,b,word)=>{
+  return String(text).replace(QURAN_RE,(m,s,a,b,word,at,all)=>{
     s=+s; a=+a;
     if(s<1 || s>114 || a<1) return m;
     if(word && !b){
-      const found=quranFind(s,a,word);
+      const ctx=(all.slice(Math.max(0,at-300),at)+" [VERSE] "+all.slice(at+m.length,at+m.length+120)).replace(QURAN_RE,"").replace(/\s+/g," ");
+      const found=quranFind(s,a,word,ctx);
       if(found==="loading") return " ("+(code==="ar" ? "القرآن " : "Quran ")+s+":"+a+") ";
       a=found;
     }
     b=b?Math.min(+b,+a+4):a;
     if(b<a) return m;
-    // The student can step to the verse before or after with the buttons by the reference.
-    const shift=Math.max(1-a, quranShift[m]||0); a+=shift; b+=shift;
     const vs=[]; let ready=true;
     for(let i=a;i<=b;i++){const v=quranVerse(s,i,code); if(typeof v==="object") vs.push(v); else ready=false}
     const where=s+":"+a+(b>a?"-"+b:"");
     const ref=vs[0] ? (code==="ar" ? vs[0].name : vs[0].en)+" "+where : (code==="ar" ? "القرآن " : "Quran ")+where;
     if(!ready) return " ("+ref+") ";
     const ar=vs.map(v=>v.ar).join(" ۝ "), tr=vs.map(v=>v.tr).filter(Boolean).join(" ");
-    const html = window.marked && window.DOMPurify;
-    const verse = html ? '<span class="ayah" lang="ar" dir="rtl">«'+ar+'»</span>' : "«"+ar+"»";
-    const refText = html ? '<span class="ayah-ref" data-q="'+encodeURIComponent(m)+'">('+ref+')</span>' : "("+ref+")";
-    return "\n\n> "+verse+" "+refText+(tr?"\n>\n> "+tr:"")+"\n\n";
+    const verse = window.marked && window.DOMPurify ? '<span class="ayah" lang="ar" dir="rtl">«'+ar+'»</span>' : "«"+ar+"»";
+    return "\n\n> "+verse+" ("+ref+")"+(tr?"\n>\n> "+tr:"")+"\n\n";
   });
 }
 function questionEl(text, img){
@@ -1272,7 +1263,7 @@ function englishEl(en){
 let raf=0;
 function streamUpdate(entry){
   if(raf) return;
-  raf=requestAnimationFrame(()=>{raf=0; if(entry.el && entry.el.isConnected){entry.el.innerHTML=md(quranize(entry.text, entry.lang||"en")); verseButtons(entry.el)} else render()});
+  raf=requestAnimationFrame(()=>{raf=0; if(entry.el && entry.el.isConnected) entry.el.innerHTML=md(quranize(entry.text, entry.lang||"en")); else render()});
 }
 function setStatus(msg){$("status").textContent=msg||""}
 function msgFor(code){
@@ -1309,7 +1300,7 @@ function buildPrompt(q){
     "- When quoting the Quran, give the verse in Arabic"+(code==="ar"?"":" followed by its meaning in "+english)+", with its surah and verse number, like (Al-Baqarah 2:129).",
     "- Quote a verse only when you are sure of its exact wording and of who said it and where it is. Never attribute a verse to a different prophet, person or surah. If you are not sure, describe it in your own words instead of quoting it. If the student's own text quotes or names a verse, keep the student's verse and don't swap it for another."
     ] : [
-    "- Never write out a verse of the Quran yourself, not even part of one. To quote a verse, write only its marker: the surah number, the verse number and two or three key English words from the verse's meaning, in the form [[quran:SURAH:VERSE|WORDS]], for example [[quran:94:6|hardship ease]]. Always write the marker exactly like that, in English letters, whatever language you reply in. For a short passage, use a range like [[quran:SURAH:FIRST-LAST]]. The page replaces the marker with the exact Arabic verse and a published translation, so don't add the verse text or its meaning next to it.",
+    "- Never write out a verse of the Quran yourself, not even part of one. To quote a verse, write only its marker: the surah number, the verse number and two or three key English words from the verse's meaning, in the form [[quran:SURAH:VERSE|WORDS]], for example [[quran:94:6|hardship ease]]. Always write the marker exactly like that, in English letters, whatever language you reply in. For a short passage, use a range like [[quran:SURAH:FIRST-LAST]]. The page replaces the marker with the exact Arabic verse, its reference and a published translation, so don't add the verse text, its meaning or its verse number anywhere else in your reply.",
     "- Use a marker only when you are sure which verse it is. Never attribute a verse to a different prophet, person or surah. If you are not sure of the verse number, describe the verse in your own words without a marker. If the student's own text quotes or names a verse, use the marker for that same verse."
     ]),
     "- Quote a hadith only when you are sure of its wording and source, and name the collection it is in.",
