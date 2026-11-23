@@ -106,8 +106,15 @@ textarea::placeholder{color:var(--muted);opacity:.8}
 }
 .photo-btn svg{width:20px;height:20px;flex:none}
 #photo:focus-visible+.photo-btn,.photo-btn:focus-within{outline:2px solid var(--pen);outline-offset:2px}
-.thumb{display:flex;align-items:center;gap:10px}
-.thumb img{width:56px;height:56px;object-fit:cover;border-radius:6px;border:1px solid var(--rule)}
+.thumbs{display:flex;flex-wrap:wrap;gap:10px}
+.thumbs figure{position:relative;margin:0}
+.thumbs img{display:block;width:64px;height:64px;object-fit:cover;border-radius:6px;border:1px solid var(--rule);background:var(--paper)}
+.thumbs button{position:absolute;top:-7px;inset-inline-end:-7px;width:22px;height:22px;padding:0;display:grid;place-items:center;border-radius:50%;border:1px solid var(--rule);background:var(--sheet);color:var(--ink);cursor:pointer}
+.thumbs button:hover{color:var(--margin);border-color:var(--margin)}
+.thumbs button svg{width:12px;height:12px}
+.photo-hint{margin:-4px 0 0;color:var(--muted);font-size:.85rem}
+#askForm.dropping{outline:2px dashed var(--pen);outline-offset:6px;border-radius:8px}
+.q-imgs{display:flex;flex-wrap:wrap;gap:6px}
 
 .actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .primary{
@@ -476,7 +483,7 @@ button.wd:hover{border-color:var(--pen)}
         <label class="check" id="alsoEnRow"><input type="checkbox" id="alsoEn"><span data-i18n="alsoEn"></span></label>
         <label class="field"><span data-i18n="question"></span><textarea id="question" rows="7" dir="auto"></textarea></label>
         <div class="photo" id="photoField">
-          <input type="file" id="photo" accept="image/jpeg,image/png,image/webp,image/gif" class="sr">
+          <input type="file" id="photo" accept="image/*" multiple class="sr">
           <label class="photo-btn" for="photo">
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg>
             <span data-i18n="photo"></span>
@@ -485,11 +492,9 @@ button.wd:hover{border-color:var(--pen)}
             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3"/></svg>
             <span id="micLbl"></span>
           </button>
-          <div class="thumb" id="thumb" hidden>
-            <img id="thumbImg" alt="">
-            <button type="button" class="tool" id="photoRemove" data-i18n="photoRemove"></button>
-          </div>
+          <div class="thumbs" id="thumbs" hidden></div>
         </div>
+        <p class="photo-hint" id="photoHint" data-i18n="pasteHint"></p>
         <div class="actions">
           <button type="submit" class="primary" id="askBtn" data-i18n="ask"></button>
           <button type="button" class="ghost" id="stopBtn" data-i18n="stop" hidden></button>
@@ -831,6 +836,19 @@ const REP_UI = {
   zh:["重复","删除重复项","这项作业已在你的清单中。","已删除重复的作业。"]
 };
 Object.keys(REP_UI).forEach(l=>REP_KEYS.forEach((k,i)=>{UI[l][k]=REP_UI[l][i]}));
+// Photo and screenshot strings, in the order of IMG_KEYS ({n} = how many pictures fit)
+const IMG_KEYS = ["photo","pasteHint","imgMax","imgType"];
+const IMG_UI = {
+  en:["Add a photo or screenshot","You can also paste a screenshot (Ctrl+V) or drag pictures here.","You can add up to {n} pictures.","That file isn't a picture. Use a photo or screenshot (JPG, PNG, WebP or GIF)."],
+  ar:["أضف صورة أو لقطة شاشة","يمكنك أيضًا لصق لقطة شاشة (Ctrl+V) أو سحب الصور إلى هنا.","يمكنك إضافة {n} صور كحد أقصى.","هذا الملف ليس صورة. استخدم صورة أو لقطة شاشة (JPG أو PNG أو WebP أو GIF)."],
+  es:["Añade una foto o captura de pantalla","También puedes pegar una captura (Ctrl+V) o arrastrar imágenes aquí.","Puedes añadir hasta {n} imágenes.","Ese archivo no es una imagen. Usa una foto o captura (JPG, PNG, WebP o GIF)."],
+  ur:["تصویر یا اسکرین شاٹ شامل کریں","آپ اسکرین شاٹ پیسٹ (Ctrl+V) بھی کر سکتے ہیں یا تصویریں یہاں کھینچ کر لا سکتے ہیں۔","آپ زیادہ سے زیادہ {n} تصویریں شامل کر سکتے ہیں۔","یہ فائل تصویر نہیں ہے۔ تصویر یا اسکرین شاٹ استعمال کریں (JPG، PNG، WebP یا GIF)۔"],
+  hi:["फ़ोटो या स्क्रीनशॉट जोड़ें","आप स्क्रीनशॉट पेस्ट (Ctrl+V) भी कर सकते हैं या तस्वीरें यहाँ खींचकर ला सकते हैं।","आप अधिकतम {n} तस्वीरें जोड़ सकते हैं।","यह फ़ाइल तस्वीर नहीं है। फ़ोटो या स्क्रीनशॉट इस्तेमाल करें (JPG, PNG, WebP या GIF)।"],
+  bn:["ছবি বা স্ক্রিনশট যোগ করুন","আপনি স্ক্রিনশট পেস্ট (Ctrl+V) করতে বা ছবি এখানে টেনে আনতেও পারেন।","আপনি সর্বোচ্চ {n}টি ছবি যোগ করতে পারেন।","এই ফাইলটি ছবি নয়। ছবি বা স্ক্রিনশট ব্যবহার করুন (JPG, PNG, WebP বা GIF)।"],
+  fr:["Ajoute une photo ou une capture d'écran","Tu peux aussi coller une capture (Ctrl+V) ou glisser des images ici.","Tu peux ajouter jusqu'à {n} images.","Ce fichier n'est pas une image. Utilise une photo ou une capture (JPG, PNG, WebP ou GIF)."],
+  zh:["添加照片或截图","也可以粘贴截图（Ctrl+V）或把图片拖到这里。","最多可以添加 {n} 张图片。","这个文件不是图片。请使用照片或截图（JPG、PNG、WebP 或 GIF）。"]
+};
+Object.keys(IMG_UI).forEach(l=>IMG_KEYS.forEach((k,i)=>{UI[l][k]=IMG_UI[l][i]}));
 Object.keys(TM_LEN_UI).forEach(l=>{UI[l].focusLen=TM_LEN_UI[l][0]; UI[l].brkLen=TM_LEN_UI[l][1]});
 
 // Study tools, study plan and voice typing strings, in the order of STUDY_KEYS
@@ -938,7 +956,8 @@ let ui = store.get("ui");
 if(!UI[ui]){const n=(navigator.language||"en").slice(0,2).toLowerCase();ui=UI[n]?n:"en"}
 let answerTouched = !!store.get("answer");
 let thread = [], turns = [], showingExample = true, busy = false, ctl = null;
-let photoFile = null, photoURL = "", speaking = false, tts = null, unavailable = false;
+let photos = [], speaking = false, tts = null, unavailable = false;  // photos: [{file, thumb}]
+let IMG_MAX = 4, IMG_TYPES = ["image/jpeg","image/png","image/webp","image/gif"];
 const t = k => (UI[ui][k] ?? UI.en[k]);
 
 /* ---------- Outside Claude: the website and the installed app ----------
@@ -998,7 +1017,7 @@ function webSample(){
     const keep=opts.keepWords!==undefined ? opts.keepWords : task==="translate";
     const clean=s=>fixScript(s.replace(WEB_CUT,""), code, keep);
     const body={messages:turns.map(m=>({role:m.role,content:String(m.content)})), lang:langInfo(code)[2]};
-    if(opts.images && opts.images[0]) body.image=await photoData(opts.images[0]);
+    if(opts.images && opts.images.length) body.images=await Promise.all([...opts.images].slice(0,4).map(photoData));
     const res=await post(body, opts.signal);
     const reader=res.body.getReader(), dec=new TextDecoder();
     let text="";
@@ -1022,7 +1041,7 @@ function webSample(){
     let v; try{v=JSON.parse(s.slice(at,end+1))}catch(e){throw {code:"invalid_json"}}
     return fixAll(v, code);
   };
-  sample.limits=async()=>({images:{}});
+  sample.limits=async()=>({images:{maxCount:4}});
   return sample;
 }
 function webTTS(){
@@ -1234,12 +1253,16 @@ function quranize(text, code){
     return "\n\n> "+verse+" ("+ref+")"+(tr?"\n>\n> "+tr:"")+"\n\n";
   });
 }
-function questionEl(text, img){
+function questionEl(text, imgs){
   const q=document.createElement("div"); q.className="q";
   const who=document.createElement("div"); who.className="who"; who.textContent=t("you");
   q.append(who);
   if(text){const p=document.createElement("p"); p.dir="auto"; p.textContent=text; q.append(p)}
-  if(img){const i=document.createElement("img"); i.src=img; i.alt=""; q.append(i)}
+  if(imgs && imgs.length){
+    const row=document.createElement("div"); row.className="q-imgs";
+    imgs.forEach(src=>{const i=document.createElement("img"); i.src=src; i.alt=""; row.append(i)});
+    q.append(row);
+  }
   return q;
 }
 function render(){
@@ -1251,7 +1274,7 @@ function render(){
     page.append(tag, questionEl(t("exQ")), answerEl(t("exA"), ui));
   } else {
     thread.forEach(e=>{
-      if(e.role==="user") page.append(questionEl(e.text, e.img));
+      if(e.role==="user") page.append(questionEl(e.text, e.imgs));
       else if(e.pending && !e.text){
         const th=document.createElement("div"); th.className="thinking";
         th.innerHTML='<span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>';
@@ -1325,13 +1348,14 @@ function buildPrompt(q){
     "- Match the explanation to the student's level and define any technical word the first time you use it.",
     "- No greeting and no sign-off.",
     "- Unless you were told to give hints only, end with one short line with a bold title that gives a similar practice exercise or a question to check understanding.",
-    "If the assignment is unclear or a photo is hard to read, say what you can read and ask for what is missing.",
+    "If the assignment is unclear or a picture is hard to read, say what you can read and ask for what is missing.",
     "",
     "The student's assignment:",
     '"""',
-    q || "(See the attached photo.)",
+    q || (photos.length>1 ? "(See the attached pictures and explain what they show.)" : "(See the attached picture and explain what it shows.)"),
     '"""',
-    photoFile ? "A photo of the assignment page is attached. Read it carefully." : "",
+    photos.length>1 ? photos.length+" pictures are attached, in order: photos or screenshots of the assignment or of the topic to explain. Read them all carefully, including any text, diagrams or working in them."
+    : photos.length ? "A picture is attached: a photo or screenshot of the assignment or of the topic to explain. Read it carefully, including any text, diagrams or working in it." : "",
     "",
     "Remember: write the whole reply in "+english+" ("+native+")."
   ].join("\n");
@@ -1408,12 +1432,12 @@ $("askForm").addEventListener("submit",e=>{
   e.preventDefault();
   if(busy) return;
   const q=$("question").value.trim();
-  if(!q && !photoFile){setStatus(t("empty")); $("question").focus(); return}
+  if(!q && !photos.length){setStatus(t("empty")); $("question").focus(); return}
   if(tts && speaking) tts.stop();
   turns=[{role:"user",content:buildPrompt(q)}];
-  thread=[{role:"user",text:q,img:photoURL}];
+  thread=[{role:"user",text:q,imgs:photos.map(p=>p.thumb).filter(Boolean)}];
   showingExample=false;
-  run(photoFile ? {images:[photoFile]} : null);
+  run(photos.length ? {images:photos.map(p=>p.file)} : null);
 });
 $("stopBtn").addEventListener("click",()=>ctl && ctl.abort());
 
@@ -1438,18 +1462,68 @@ $("newBtn").addEventListener("click",()=>{
   $("question").focus();
 });
 
-/* ---------- Photo ---------- */
-function clearPhoto(){
-  if(photoURL) URL.revokeObjectURL(photoURL);
-  photoFile=null; photoURL=""; $("photo").value=""; $("thumb").hidden=true;
+/* ---------- Photos and screenshots ---------- */
+// Up to IMG_MAX pictures go with a question: picked, pasted (Ctrl+V) or dropped on the form.
+// Previews are small data URLs, since some pages block blob: links in <img>.
+async function toImage(f){
+  if(IMG_TYPES.includes(f.type)) return f;
+  if(!/^image\//.test(f.type)) return null;
+  try{  // e.g. an iPhone HEIC photo: turn it into a JPEG where the browser can read it
+    const bmp=await createImageBitmap(f), c=document.createElement("canvas"); c.width=bmp.width; c.height=bmp.height;
+    c.getContext("2d").drawImage(bmp,0,0);
+    const b=await new Promise(ok=>c.toBlob(ok,"image/jpeg",0.9));
+    return b ? new File([b],"photo.jpg",{type:"image/jpeg"}) : null;
+  }catch(e){return null}
 }
-$("photo").addEventListener("change",e=>{
-  const f=e.target.files && e.target.files[0]; if(!f) return;
-  if(photoURL) URL.revokeObjectURL(photoURL);
-  photoFile=f; photoURL=URL.createObjectURL(f);
-  $("thumbImg").src=photoURL; $("thumb").hidden=false;
+async function thumbOf(file){
+  try{
+    const bmp=await createImageBitmap(file), k=Math.min(1,320/Math.max(bmp.width,bmp.height));
+    const c=document.createElement("canvas"); c.width=Math.round(bmp.width*k); c.height=Math.round(bmp.height*k);
+    c.getContext("2d").drawImage(bmp,0,0,c.width,c.height);
+    return c.toDataURL("image/jpeg",0.8);
+  }catch(e){
+    return new Promise(ok=>{const r=new FileReader(); r.onload=()=>ok(r.result); r.onerror=()=>ok(""); r.readAsDataURL(file)});
+  }
+}
+async function addPhotos(list){
+  const files=[...(list||[])]; if(!files.length) return;
+  const imgs=(await Promise.all(files.map(toImage))).filter(Boolean);
+  if(!imgs.length){setStatus(t("imgType")); return}
+  const room=IMG_MAX-photos.length;
+  setStatus(imgs.length>room ? t("imgMax").replace("{n}",IMG_MAX) : imgs.length<files.length ? t("imgType") : "");
+  for(const file of imgs.slice(0,Math.max(0,room))) photos.push({file, thumb:await thumbOf(file)});
+  renderThumbs();
+}
+function renderThumbs(){
+  const box=$("thumbs"); box.innerHTML="";
+  photos.forEach(p=>{
+    const fig=document.createElement("figure");
+    const img=document.createElement("img"); img.src=p.thumb; img.alt="";
+    const x=document.createElement("button"); x.type="button"; x.setAttribute("aria-label",t("photoRemove")); x.title=t("photoRemove");
+    x.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg>';
+    x.addEventListener("click",()=>{photos=photos.filter(o=>o!==p); renderThumbs()});
+    fig.append(img,x); box.append(fig);
+  });
+  box.hidden=!photos.length;
+}
+function clearPhoto(){photos=[]; $("photo").value=""; renderThumbs()}
+$("photo").addEventListener("change",e=>{addPhotos(e.target.files).finally(()=>{$("photo").value=""})});
+// A screenshot pasted anywhere on the question form, or on the page itself, is added as a picture.
+document.addEventListener("paste",e=>{
+  if($("photoField").hidden) return;
+  const tg=e.target, onForm=$("askForm").contains(tg) || tg===document.body || tg===document.documentElement;
+  const files=[...((e.clipboardData && e.clipboardData.files) || [])].filter(f=>/^image\//.test(f.type));
+  if(!onForm || !files.length) return;
+  e.preventDefault(); addPhotos(files);
 });
-$("photoRemove").addEventListener("click",clearPhoto);
+const dropOK=e=>!$("photoField").hidden && e.dataTransfer && [...e.dataTransfer.types].includes("Files");
+$("askForm").addEventListener("dragover",e=>{if(!dropOK(e)) return; e.preventDefault(); $("askForm").classList.add("dropping")});
+$("askForm").addEventListener("dragleave",e=>{if(!$("askForm").contains(e.relatedTarget)) $("askForm").classList.remove("dropping")});
+$("askForm").addEventListener("drop",e=>{
+  $("askForm").classList.remove("dropping");
+  if(!dropOK(e)) return;
+  e.preventDefault(); addPhotos(e.dataTransfer.files);
+});
 
 /* ---------- Copy & read aloud ---------- */
 function lastAnswer(){const all=$("page").querySelectorAll(".a:not(.a-en)"); return all[all.length-1]}
@@ -1487,7 +1561,11 @@ $("listenBtn").addEventListener("click",()=>{
 /* ---------- Availability ---------- */
 samplePromise.then(s=>{
   if(!s){unavailable=true; setStatus(t("unavailable")); return}
-  if(s.limits) s.limits().then(l=>{if(!l || !l.images) $("photoField").hidden=true}).catch(()=>{});
+  if(s.limits) s.limits().then(l=>{
+    if(!l || !l.images){$("photoField").hidden=true; $("photoHint").hidden=true; return}
+    IMG_MAX=Math.max(1,Math.min(4,l.images.maxCount||1));
+    if(Array.isArray(l.images.mediaTypes) && l.images.mediaTypes.length) IMG_TYPES=l.images.mediaTypes;
+  }).catch(()=>{});
 });
 
 /* ---------- Study tools: flashcards, quiz, focus timer ---------- */

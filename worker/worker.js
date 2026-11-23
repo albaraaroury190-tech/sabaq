@@ -5,7 +5,7 @@
 
 const MODEL = "@cf/google/gemma-4-26b-a4b-it";
 const CUT = "\u0000cut"; // sent after a streamed answer that hit the length limit
-const LIMITS = { turns: 14, chars: 60000, imageChars: 6_000_000, answerTokens: 1800, jsonTokens: 2500 };
+const LIMITS = { turns: 14, chars: 60000, images: 4, imageChars: 12_000_000, answerTokens: 1800, jsonTokens: 2500 };
 
 export default {
   async fetch(request, env) {
@@ -30,9 +30,9 @@ export default {
     // Open models can slip letters from another alphabet into a word; say plainly which one to use.
     const script = `Write every word in ${input.lang || "the language the student asks for"}, using only that language's own alphabet. Never mix letters from another alphabet into a word. Numbers, formulas and code stay in standard notation.`;
     const messages = [{ role: "system", content: script }, ...input.messages.map(m => ({ role: m.role, content: m.content }))];
-    if (input.image) {
+    if (input.images.length) {
       const last = messages[messages.length - 1];
-      last.content = [{ type: "text", text: last.content }, { type: "image_url", image_url: { url: input.image } }];
+      last.content = [{ type: "text", text: last.content }, ...input.images.map(url => ({ type: "image_url", image_url: { url } }))];
     }
     const options = {
       messages,
@@ -59,19 +59,18 @@ export default {
   },
 };
 
-// Checks the request: up to 14 turns of user/assistant text ending with the student, and an optional photo.
+// Checks the request: up to 14 turns of user/assistant text ending with the student, and up to 4 photos or
+// screenshots (`images`, or a single `image` from older pages).
 function clean(body) {
   const turns = Array.isArray(body && body.messages) ? body.messages.slice(-LIMITS.turns) : [];
   const messages = turns.map(m => ({ role: m && m.role === "assistant" ? "assistant" : "user", content: String((m && m.content) || "").trim() })).filter(m => m.content);
   const size = messages.reduce((n, m) => n + m.content.length, 0);
   if (!messages.length || messages[messages.length - 1].role !== "user" || size > LIMITS.chars) throw new Error("bad");
-  let image = "";
-  if (body.image) {
-    image = String(body.image);
-    if (!/^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(image) || image.length > LIMITS.imageChars) throw new Error("bad");
-  }
+  const images = (Array.isArray(body.images) ? body.images : body.image ? [body.image] : []).map(String);
+  if (images.length > LIMITS.images || images.reduce((n, s) => n + s.length, 0) > LIMITS.imageChars) throw new Error("bad");
+  if (images.some(s => !/^data:image\/(png|jpeg|webp|gif);base64,[A-Za-z0-9+/=]+$/.test(s))) throw new Error("bad");
   const lang = /^[\p{L} ()-]{2,40}$/u.test(String(body.lang || "")) ? String(body.lang) : "";
-  return { messages, image, lang, json: body.json === true };
+  return { messages, images, lang, json: body.json === true };
 }
 
 // Turns the model's server-sent events into plain text, so the page can show the answer as it arrives.
