@@ -115,6 +115,7 @@ textarea::placeholder{color:var(--muted);opacity:.8}
 .photo-hint{margin:-4px 0 0;color:var(--muted);font-size:.85rem}
 #askForm.dropping{outline:2px dashed var(--pen);outline-offset:6px;border-radius:8px}
 .q-imgs{display:flex;flex-wrap:wrap;gap:6px}
+.q .q-imgs img{max-height:96px}
 
 .actions{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
 .primary{
@@ -836,17 +837,17 @@ const REP_UI = {
   zh:["重复","删除重复项","这项作业已在你的清单中。","已删除重复的作业。"]
 };
 Object.keys(REP_UI).forEach(l=>REP_KEYS.forEach((k,i)=>{UI[l][k]=REP_UI[l][i]}));
-// Photo and screenshot strings, in the order of IMG_KEYS ({n} = how many pictures fit)
-const IMG_KEYS = ["photo","pasteHint","imgMax","imgType"];
+// Photo and screenshot strings, in the order of IMG_KEYS ({a}–{b} of {n} = the pictures being read)
+const IMG_KEYS = ["photo","pasteHint","imgReading","imgType"];
 const IMG_UI = {
-  en:["Add a photo or screenshot","You can also paste a screenshot (Ctrl+V) or drag pictures here.","You can add up to {n} pictures.","That file isn't a picture. Use a photo or screenshot (JPG, PNG, WebP or GIF)."],
-  ar:["أضف صورة أو لقطة شاشة","يمكنك أيضًا لصق لقطة شاشة (Ctrl+V) أو سحب الصور إلى هنا.","يمكنك إضافة {n} صور كحد أقصى.","هذا الملف ليس صورة. استخدم صورة أو لقطة شاشة (JPG أو PNG أو WebP أو GIF)."],
-  es:["Añade una foto o captura de pantalla","También puedes pegar una captura (Ctrl+V) o arrastrar imágenes aquí.","Puedes añadir hasta {n} imágenes.","Ese archivo no es una imagen. Usa una foto o captura (JPG, PNG, WebP o GIF)."],
-  ur:["تصویر یا اسکرین شاٹ شامل کریں","آپ اسکرین شاٹ پیسٹ (Ctrl+V) بھی کر سکتے ہیں یا تصویریں یہاں کھینچ کر لا سکتے ہیں۔","آپ زیادہ سے زیادہ {n} تصویریں شامل کر سکتے ہیں۔","یہ فائل تصویر نہیں ہے۔ تصویر یا اسکرین شاٹ استعمال کریں (JPG، PNG، WebP یا GIF)۔"],
-  hi:["फ़ोटो या स्क्रीनशॉट जोड़ें","आप स्क्रीनशॉट पेस्ट (Ctrl+V) भी कर सकते हैं या तस्वीरें यहाँ खींचकर ला सकते हैं।","आप अधिकतम {n} तस्वीरें जोड़ सकते हैं।","यह फ़ाइल तस्वीर नहीं है। फ़ोटो या स्क्रीनशॉट इस्तेमाल करें (JPG, PNG, WebP या GIF)।"],
-  bn:["ছবি বা স্ক্রিনশট যোগ করুন","আপনি স্ক্রিনশট পেস্ট (Ctrl+V) করতে বা ছবি এখানে টেনে আনতেও পারেন।","আপনি সর্বোচ্চ {n}টি ছবি যোগ করতে পারেন।","এই ফাইলটি ছবি নয়। ছবি বা স্ক্রিনশট ব্যবহার করুন (JPG, PNG, WebP বা GIF)।"],
-  fr:["Ajoute une photo ou une capture d'écran","Tu peux aussi coller une capture (Ctrl+V) ou glisser des images ici.","Tu peux ajouter jusqu'à {n} images.","Ce fichier n'est pas une image. Utilise une photo ou une capture (JPG, PNG, WebP ou GIF)."],
-  zh:["添加照片或截图","也可以粘贴截图（Ctrl+V）或把图片拖到这里。","最多可以添加 {n} 张图片。","这个文件不是图片。请使用照片或截图（JPG、PNG、WebP 或 GIF）。"]
+  en:["Add a photo or screenshot","You can also paste a screenshot (Ctrl+V) or drag pictures here.","Reading pictures {a}–{b} of {n}…","That file isn't a picture. Use a photo or screenshot (JPG, PNG, WebP or GIF)."],
+  ar:["أضف صورة أو لقطة شاشة","يمكنك أيضًا لصق لقطة شاشة (Ctrl+V) أو سحب الصور إلى هنا.","جارٍ قراءة الصور {a}–{b} من {n}…","هذا الملف ليس صورة. استخدم صورة أو لقطة شاشة (JPG أو PNG أو WebP أو GIF)."],
+  es:["Añade una foto o captura de pantalla","También puedes pegar una captura (Ctrl+V) o arrastrar imágenes aquí.","Leyendo las imágenes {a}–{b} de {n}…","Ese archivo no es una imagen. Usa una foto o captura (JPG, PNG, WebP o GIF)."],
+  ur:["تصویر یا اسکرین شاٹ شامل کریں","آپ اسکرین شاٹ پیسٹ (Ctrl+V) بھی کر سکتے ہیں یا تصویریں یہاں کھینچ کر لا سکتے ہیں۔","تصویریں {a}–{b} از {n} پڑھی جا رہی ہیں…","یہ فائل تصویر نہیں ہے۔ تصویر یا اسکرین شاٹ استعمال کریں (JPG، PNG، WebP یا GIF)۔"],
+  hi:["फ़ोटो या स्क्रीनशॉट जोड़ें","आप स्क्रीनशॉट पेस्ट (Ctrl+V) भी कर सकते हैं या तस्वीरें यहाँ खींचकर ला सकते हैं।","तस्वीरें {a}–{b} (कुल {n}) पढ़ी जा रही हैं…","यह फ़ाइल तस्वीर नहीं है। फ़ोटो या स्क्रीनशॉट इस्तेमाल करें (JPG, PNG, WebP या GIF)।"],
+  bn:["ছবি বা স্ক্রিনশট যোগ করুন","আপনি স্ক্রিনশট পেস্ট (Ctrl+V) করতে বা ছবি এখানে টেনে আনতেও পারেন।","{n}টির মধ্যে {a}–{b} নম্বর ছবি পড়া হচ্ছে…","এই ফাইলটি ছবি নয়। ছবি বা স্ক্রিনশট ব্যবহার করুন (JPG, PNG, WebP বা GIF)।"],
+  fr:["Ajoute une photo ou une capture d'écran","Tu peux aussi coller une capture (Ctrl+V) ou glisser des images ici.","Lecture des images {a} à {b} sur {n}…","Ce fichier n'est pas une image. Utilise une photo ou une capture (JPG, PNG, WebP ou GIF)."],
+  zh:["添加照片或截图","也可以粘贴截图（Ctrl+V）或把图片拖到这里。","正在读取第 {a}–{b} 张图片（共 {n} 张）…","这个文件不是图片。请使用照片或截图（JPG、PNG、WebP 或 GIF）。"]
 };
 Object.keys(IMG_UI).forEach(l=>IMG_KEYS.forEach((k,i)=>{UI[l][k]=IMG_UI[l][i]}));
 Object.keys(TM_LEN_UI).forEach(l=>{UI[l].focusLen=TM_LEN_UI[l][0]; UI[l].brkLen=TM_LEN_UI[l][1]});
@@ -957,7 +958,8 @@ if(!UI[ui]){const n=(navigator.language||"en").slice(0,2).toLowerCase();ui=UI[n]
 let answerTouched = !!store.get("answer");
 let thread = [], turns = [], showingExample = true, busy = false, ctl = null;
 let photos = [], speaking = false, tts = null, unavailable = false;  // photos: [{file, thumb}]
-let IMG_MAX = 4, IMG_TYPES = ["image/jpeg","image/png","image/webp","image/gif"];
+// Any number of pictures can be added; IMG_PER_CALL is how many one request to the AI carries.
+let IMG_PER_CALL = 4, IMG_TYPES = ["image/jpeg","image/png","image/webp","image/gif"];
 const t = k => (UI[ui][k] ?? UI.en[k]);
 
 /* ---------- Outside Claude: the website and the installed app ----------
@@ -1361,6 +1363,26 @@ function buildPrompt(q){
   ].join("\n");
 }
 
+// The free helper allows a few requests a minute: when it says it is busy, wait 20 s and try again (up to 6 times).
+async function retryBusy(call, signal){
+  for(let tries=0;;tries++){
+    try{return await call()}
+    catch(e){
+      if(!(e && e.code==="rate_limited") || tries>=6) throw e;
+      await new Promise((ok,fail)=>{const id=setTimeout(ok,20000); signal.addEventListener("abort",()=>{clearTimeout(id); fail({code:"cancelled"})},{once:true})});
+    }
+  }
+}
+// Writes down what one group of pictures contains, for a question with more pictures than one request carries.
+async function readPictures(sample, group, from, total, signal){
+  const prompt=[
+    "These are pictures "+(from+1)+" to "+(from+group.length)+" of "+total+" that a student attached: photos or screenshots of an assignment or of a topic to explain.",
+    "Write down everything in them, picture by picture, starting each with \"Picture N:\" and numbering from "+(from+1)+".",
+    "Copy all text, questions, numbers and equations exactly, in their original language, and briefly describe any diagram, table or drawing. Don't answer or explain anything yet."
+  ].join("\n");
+  const opts=IN_CLAUDE ? {images:group, signal, cache:false} : {images:group, signal, keepWords:true};
+  return (await retryBusy(()=>sample([{role:"user",content:prompt}], opts), signal)).text;
+}
 async function run(extra){
   const sample = await samplePromise;
   if(!sample){setStatus(t("unavailable")); return}
@@ -1372,8 +1394,20 @@ async function run(extra){
   if(matchMedia("(max-width:900px)").matches) $("answerSheet").scrollIntoView({behavior:"smooth",block:"start"});
   try{
     const opts={signal:ctl.signal,cache:false,onText:({text})=>{entry.text=text;entry.pending=false;streamUpdate(entry)}};
-    if(extra && extra.images) opts.images=extra.images;
-    const res=await sample(turns.slice(), opts);
+    const images=extra && extra.images ? [...extra.images] : [];
+    if(images.length>IMG_PER_CALL){
+      // More pictures than one request carries: read them a group at a time, then answer from what was read.
+      const notes=[];
+      for(let i=0;i<images.length;i+=IMG_PER_CALL){
+        const group=images.slice(i,i+IMG_PER_CALL);
+        setStatus(t("imgReading").replace("{a}",i+1).replace("{b}",i+group.length).replace("{n}",images.length));
+        notes.push(await readPictures(sample, group, i, images.length, ctl.signal));
+      }
+      setStatus("");
+      const last=turns.length-1;
+      turns[last]={role:"user",content:turns[last].content+"\n\nThe pictures were too many to send at once, so here is everything in them, as read picture by picture:\n\n"+notes.join("\n\n")};
+    } else if(images.length) opts.images=images;
+    const res=images.length>IMG_PER_CALL ? await retryBusy(()=>sample(turns.slice(), opts), ctl.signal) : await sample(turns.slice(), opts);
     entry.text=res.text;
     turns.push({role:"assistant",content:res.text});
     if(res.truncated) setStatus(t("cut"));
@@ -1463,7 +1497,7 @@ $("newBtn").addEventListener("click",()=>{
 });
 
 /* ---------- Photos and screenshots ---------- */
-// Up to IMG_MAX pictures go with a question: picked, pasted (Ctrl+V) or dropped on the form.
+// Pictures go with a question: picked, pasted (Ctrl+V) or dropped on the form.
 // Previews are small data URLs, since some pages block blob: links in <img>.
 async function toImage(f){
   if(IMG_TYPES.includes(f.type)) return f;
@@ -1489,9 +1523,8 @@ async function addPhotos(list){
   const files=[...(list||[])]; if(!files.length) return;
   const imgs=(await Promise.all(files.map(toImage))).filter(Boolean);
   if(!imgs.length){setStatus(t("imgType")); return}
-  const room=IMG_MAX-photos.length;
-  setStatus(imgs.length>room ? t("imgMax").replace("{n}",IMG_MAX) : imgs.length<files.length ? t("imgType") : "");
-  for(const file of imgs.slice(0,Math.max(0,room))) photos.push({file, thumb:await thumbOf(file)});
+  setStatus(imgs.length<files.length ? t("imgType") : "");
+  for(const file of imgs) photos.push({file, thumb:await thumbOf(file)});
   renderThumbs();
 }
 function renderThumbs(){
@@ -1563,7 +1596,7 @@ samplePromise.then(s=>{
   if(!s){unavailable=true; setStatus(t("unavailable")); return}
   if(s.limits) s.limits().then(l=>{
     if(!l || !l.images){$("photoField").hidden=true; $("photoHint").hidden=true; return}
-    IMG_MAX=Math.max(1,Math.min(4,l.images.maxCount||1));
+    IMG_PER_CALL=Math.max(1,Math.min(8,l.images.maxCount||1));
     if(Array.isArray(l.images.mediaTypes) && l.images.mediaTypes.length) IMG_TYPES=l.images.mediaTypes;
   }).catch(()=>{});
 });
