@@ -158,7 +158,7 @@ textarea::placeholder{color:var(--muted);opacity:.8}
 .en-wrap .a{border-bottom:0;padding-bottom:0}
 .en-wrap .thinking{padding:0}
 .check{display:flex;align-items:center;gap:8px;font-size:.95rem;cursor:pointer;width:fit-content}
-.check[hidden]{display:none}
+.check[hidden],.blk-pc[hidden],.thumbs[hidden]{display:none}
 .check input{width:18px;height:18px;margin:0;accent-color:var(--pen);flex:none;cursor:pointer}
 .a:last-child{border-bottom:0}
 .a>:first-child{margin-top:0}
@@ -366,7 +366,7 @@ button.wd:hover{border-color:var(--pen)}
 .tm-len{border:0;margin:0;padding:0;min-width:0;display:grid;grid-template-columns:1fr 1fr;gap:6px}
 .tm-len legend{padding:0;margin-bottom:4px;font-size:.9rem;font-weight:700;color:var(--muted)}
 .tm-len label{display:grid;gap:2px;font-size:.8rem;color:var(--muted)}
-.tm-len input{width:100%;font-variant-numeric:tabular-nums}
+.tm-len input{width:100%;font-variant-numeric:tabular-nums;border:1px solid var(--rule);border-radius:8px;background:var(--paper);color:inherit;padding:8px 10px}
 .tm-time.long{font-size:2rem}
 .tm-presets{display:flex;flex-wrap:wrap;gap:6px;margin-top:-6px}
 .tm-presets button{border:1px solid var(--rule);background:transparent;border-radius:999px;padding:2px 10px;font-size:.85rem;cursor:pointer;font-variant-numeric:tabular-nums}
@@ -915,8 +915,8 @@ const BLK_UI = {
   en:["App and site blocker","Choose what distracts you. Sabaq blocks it while the focus timer runs.","Add a website, e.g. netflix.com","Add",
     "Block these while the focus timer runs","Sabaq Blocker is on in this browser. Your chosen sites will be blocked during focus.","Blocking now, until this focus round ends.",
     "A website can't block other sites by itself. To block them on a computer, add the free Sabaq Blocker to Chrome or Edge.",
-    "The blocker works with the Sabaq website (sabaq-study.pages.dev) in Chrome or Edge.","Download Sabaq Blocker","How to add it to Chrome or Edge",
-    "Unzip the downloaded file.","Open chrome://extensions (in Edge: edge://extensions) and turn on Developer mode.","Click Load unpacked and choose the sabaq-blocker folder.",
+    "The blocker works with the Sabaq website (sabaq-study.pages.dev) in Chrome or Edge.","Download Sabaq Blocker","How to add it to Chrome or Edge (it isn't in the Chrome Web Store yet)",
+    "Unzip the downloaded file: right-click it and choose Extract All.","Open chrome://extensions (in Edge: edge://extensions) and turn on Developer mode.","Click Load unpacked and choose the unzipped sabaq-blocker folder, the one with manifest.json inside.",
     "Come back to this page and reload it. It will say the blocker is on.","Block apps on a phone",
     "Android: open Settings → Digital Wellbeing & parental controls → Focus mode. Pick the apps (Facebook, Instagram, Threads, YouTube…), then tap Turn on now, or set a schedule for your study time.",
     "iPhone: open Settings → Screen Time → App Limits → Add Limit. Pick the apps or the Social category, set a short limit such as 1 minute, and tap Add. You can also use Settings → Focus to hide them while you study.",
@@ -924,8 +924,8 @@ const BLK_UI = {
   ar:["حاجب التطبيقات والمواقع","اختر ما يشتّت انتباهك، وسيحجبه سبق أثناء تشغيل مؤقت التركيز.","أضف موقعًا، مثل netflix.com","أضف",
     "احجب هذه أثناء تشغيل مؤقت التركيز","حاجب سبق مفعّل في هذا المتصفح. ستُحجب المواقع التي اخترتها أثناء التركيز.","الحجب يعمل الآن حتى تنتهي جولة التركيز هذه.",
     "لا يستطيع موقع إلكتروني حجب مواقع أخرى بمفرده. لحجبها على الكمبيوتر، أضف حاجب سبق المجاني إلى Chrome أو Edge.",
-    "يعمل الحاجب مع موقع سبق (sabaq-study.pages.dev) في Chrome أو Edge.","نزّل حاجب سبق","طريقة إضافته إلى Chrome أو Edge",
-    "فك ضغط الملف الذي نزّلته.","افتح chrome://extensions (في Edge: edge://extensions) وفعّل وضع المطوّر (Developer mode).","اضغط تحميل غير المضغوط (Load unpacked) واختر مجلد sabaq-blocker.",
+    "يعمل الحاجب مع موقع سبق (sabaq-study.pages.dev) في Chrome أو Edge.","نزّل حاجب سبق","طريقة إضافته إلى Chrome أو Edge (ليس في متجر Chrome الإلكتروني بعد)",
+    "فك ضغط الملف الذي نزّلته: انقر عليه بزر الفأرة الأيمن واختر استخراج الكل (Extract All).","افتح chrome://extensions (في Edge: edge://extensions) وفعّل وضع المطوّر (Developer mode).","اضغط تحميل غير المضغوط (Load unpacked) واختر مجلد sabaq-blocker الذي استخرجته، وهو المجلد الذي يحتوي على ملف manifest.json.",
     "ارجع إلى هذه الصفحة وأعد تحميلها، وستظهر رسالة بأن الحاجب مفعّل.","حجب التطبيقات على الهاتف",
     "أندرويد: افتح الإعدادات ← الصحة الرقمية وأدوات الرقابة الأبوية ← وضع التركيز. اختر التطبيقات (فيسبوك، إنستغرام، ثريدز، يوتيوب…) ثم اضغط التشغيل الآن، أو حدّد جدولًا لوقت دراستك.",
     "آيفون: افتح الإعدادات ← مدة استخدام الجهاز ← حدود التطبيقات ← إضافة حد. اختر التطبيقات أو فئة التواصل الاجتماعي، وحدّد مدة قصيرة مثل دقيقة واحدة، ثم اضغط إضافة. ويمكنك أيضًا استخدام الإعدادات ← التركيز لإخفائها أثناء الدراسة.",
@@ -933,8 +933,8 @@ const BLK_UI = {
   es:["Bloqueador de apps y sitios","Elige lo que te distrae. Sabaq lo bloquea mientras corre el temporizador.","Añade un sitio web, p. ej. netflix.com","Añadir",
     "Bloquear esto mientras corre el temporizador","Sabaq Blocker está activo en este navegador. Tus sitios elegidos se bloquearán durante la concentración.","Bloqueando ahora, hasta que termine esta ronda.",
     "Un sitio web no puede bloquear otros sitios por sí solo. Para bloquearlos en un ordenador, añade el bloqueador gratuito Sabaq Blocker a Chrome o Edge.",
-    "El bloqueador funciona con el sitio de Sabaq (sabaq-study.pages.dev) en Chrome o Edge.","Descargar Sabaq Blocker","Cómo añadirlo a Chrome o Edge",
-    "Descomprime el archivo descargado.","Abre chrome://extensions (en Edge: edge://extensions) y activa el Modo de desarrollador.","Haz clic en Cargar descomprimida y elige la carpeta sabaq-blocker.",
+    "El bloqueador funciona con el sitio de Sabaq (sabaq-study.pages.dev) en Chrome o Edge.","Descargar Sabaq Blocker","Cómo añadirlo a Chrome o Edge (aún no está en Chrome Web Store)",
+    "Descomprime el archivo descargado: haz clic derecho y elige Extraer todo.","Abre chrome://extensions (en Edge: edge://extensions) y activa el Modo de desarrollador.","Haz clic en Cargar descomprimida y elige la carpeta sabaq-blocker descomprimida, la que tiene manifest.json dentro.",
     "Vuelve a esta página y recárgala. Dirá que el bloqueador está activo.","Bloquear apps en el móvil",
     "Android: abre Ajustes → Bienestar digital y controles parentales → Modo concentración. Elige las apps (Facebook, Instagram, Threads, YouTube…) y toca Activar ahora, o programa tu horario de estudio.",
     "iPhone: abre Ajustes → Tiempo de uso → Límites de apps → Añadir límite. Elige las apps o la categoría Redes sociales, pon un límite corto como 1 minuto y toca Añadir. También puedes usar Ajustes → Concentración para ocultarlas mientras estudias.",
@@ -942,8 +942,8 @@ const BLK_UI = {
   ur:["ایپ اور سائٹ بلاکر","جو چیز آپ کا دھیان بٹاتی ہے اسے چنیں۔ توجہ کا ٹائمر چلنے کے دوران سبق اسے بلاک کر دے گا۔","ویب سائٹ شامل کریں، مثلاً netflix.com","شامل کریں",
     "توجہ کا ٹائمر چلنے کے دوران انہیں بلاک کریں","اس براؤزر میں سبق بلاکر آن ہے۔ توجہ کے دوران آپ کی چنی ہوئی سائٹس بلاک رہیں گی۔","ابھی بلاک ہو رہا ہے، یہ توجہ کا دور ختم ہونے تک۔",
     "کوئی ویب سائٹ خود دوسری سائٹس بلاک نہیں کر سکتی۔ کمپیوٹر پر بلاک کرنے کے لیے مفت سبق بلاکر Chrome یا Edge میں شامل کریں۔",
-    "بلاکر Chrome یا Edge میں سبق کی ویب سائٹ (sabaq-study.pages.dev) کے ساتھ کام کرتا ہے۔","سبق بلاکر ڈاؤن لوڈ کریں","اسے Chrome یا Edge میں کیسے شامل کریں",
-    "ڈاؤن لوڈ کی گئی فائل کو ان زپ کریں۔","chrome://extensions کھولیں (Edge میں: edge://extensions) اور Developer mode آن کریں۔","Load unpacked پر کلک کریں اور sabaq-blocker فولڈر چنیں۔",
+    "بلاکر Chrome یا Edge میں سبق کی ویب سائٹ (sabaq-study.pages.dev) کے ساتھ کام کرتا ہے۔","سبق بلاکر ڈاؤن لوڈ کریں","اسے Chrome یا Edge میں کیسے شامل کریں (یہ ابھی Chrome Web Store میں نہیں ہے)",
+    "ڈاؤن لوڈ کی گئی فائل کو ان زپ کریں: اس پر رائٹ کلک کر کے Extract All چنیں۔","chrome://extensions کھولیں (Edge میں: edge://extensions) اور Developer mode آن کریں۔","Load unpacked پر کلک کریں اور ان زپ کیا ہوا sabaq-blocker فولڈر چنیں، جس کے اندر manifest.json ہے۔",
     "اس صفحے پر واپس آ کر اسے دوبارہ لوڈ کریں۔ یہ بتائے گا کہ بلاکر آن ہے۔","فون پر ایپس بلاک کریں",
     "اینڈرائیڈ: Settings ← Digital Wellbeing & parental controls ← Focus mode کھولیں۔ ایپس چنیں (Facebook، Instagram، Threads، YouTube…) پھر Turn on now دبائیں، یا پڑھائی کے وقت کا شیڈول بنائیں۔",
     "آئی فون: Settings ← Screen Time ← App Limits ← Add Limit کھولیں۔ ایپس یا Social کیٹیگری چنیں، 1 منٹ جیسی مختصر حد رکھیں اور Add دبائیں۔ آپ Settings ← Focus سے بھی پڑھائی کے دوران انہیں چھپا سکتے ہیں۔",
@@ -951,8 +951,8 @@ const BLK_UI = {
   hi:["ऐप और साइट ब्लॉकर","जो चीज़ आपका ध्यान भटकाती है उसे चुनें। फ़ोकस टाइमर चलते समय Sabaq उसे ब्लॉक करेगा।","वेबसाइट जोड़ें, जैसे netflix.com","जोड़ें",
     "फ़ोकस टाइमर चलते समय इन्हें ब्लॉक करें","इस ब्राउज़र में Sabaq Blocker चालू है। फ़ोकस के दौरान आपकी चुनी हुई साइटें ब्लॉक रहेंगी।","अभी ब्लॉक हो रहा है, यह फ़ोकस राउंड ख़त्म होने तक।",
     "कोई वेबसाइट अपने आप दूसरी साइटें ब्लॉक नहीं कर सकती। कंप्यूटर पर उन्हें ब्लॉक करने के लिए मुफ़्त Sabaq Blocker को Chrome या Edge में जोड़ें।",
-    "ब्लॉकर Chrome या Edge में Sabaq वेबसाइट (sabaq-study.pages.dev) के साथ काम करता है।","Sabaq Blocker डाउनलोड करें","इसे Chrome या Edge में कैसे जोड़ें",
-    "डाउनलोड की गई फ़ाइल को अनज़िप करें।","chrome://extensions खोलें (Edge में: edge://extensions) और Developer mode चालू करें।","Load unpacked पर क्लिक करें और sabaq-blocker फ़ोल्डर चुनें।",
+    "ब्लॉकर Chrome या Edge में Sabaq वेबसाइट (sabaq-study.pages.dev) के साथ काम करता है।","Sabaq Blocker डाउनलोड करें","इसे Chrome या Edge में कैसे जोड़ें (यह अभी Chrome Web Store में नहीं है)",
+    "डाउनलोड की गई फ़ाइल को अनज़िप करें: उस पर राइट-क्लिक करके Extract All चुनें।","chrome://extensions खोलें (Edge में: edge://extensions) और Developer mode चालू करें।","Load unpacked पर क्लिक करें और अनज़िप किया हुआ sabaq-blocker फ़ोल्डर चुनें, जिसके अंदर manifest.json है।",
     "इस पेज पर लौटकर इसे रीलोड करें। यह बताएगा कि ब्लॉकर चालू है।","फ़ोन पर ऐप ब्लॉक करें",
     "Android: Settings → Digital Wellbeing & parental controls → Focus mode खोलें। ऐप चुनें (Facebook, Instagram, Threads, YouTube…), फिर Turn on now दबाएँ, या पढ़ाई के समय का शेड्यूल बनाएँ।",
     "iPhone: Settings → Screen Time → App Limits → Add Limit खोलें। ऐप या Social श्रेणी चुनें, 1 मिनट जैसी छोटी सीमा रखें और Add दबाएँ। पढ़ाई के समय उन्हें छिपाने के लिए Settings → Focus भी इस्तेमाल कर सकते हैं।",
@@ -960,8 +960,8 @@ const BLK_UI = {
   bn:["অ্যাপ ও সাইট ব্লকার","যা আপনার মনোযোগ নষ্ট করে তা বেছে নিন। ফোকাস টাইমার চলার সময় Sabaq সেটি ব্লক করবে।","একটি ওয়েবসাইট যোগ করুন, যেমন netflix.com","যোগ করুন",
     "ফোকাস টাইমার চলার সময় এগুলো ব্লক করুন","এই ব্রাউজারে Sabaq Blocker চালু আছে। ফোকাসের সময় আপনার বেছে নেওয়া সাইটগুলো ব্লক থাকবে।","এখন ব্লক চলছে, এই ফোকাস রাউন্ড শেষ না হওয়া পর্যন্ত।",
     "কোনো ওয়েবসাইট নিজে থেকে অন্য সাইট ব্লক করতে পারে না। কম্পিউটারে সেগুলো ব্লক করতে বিনামূল্যের Sabaq Blocker Chrome বা Edge-এ যোগ করুন।",
-    "ব্লকারটি Chrome বা Edge-এ Sabaq ওয়েবসাইটের (sabaq-study.pages.dev) সঙ্গে কাজ করে।","Sabaq Blocker ডাউনলোড করুন","Chrome বা Edge-এ কীভাবে যোগ করবেন",
-    "ডাউনলোড করা ফাইলটি আনজিপ করুন।","chrome://extensions খুলুন (Edge-এ: edge://extensions) এবং Developer mode চালু করুন।","Load unpacked-এ ক্লিক করে sabaq-blocker ফোল্ডারটি বেছে নিন।",
+    "ব্লকারটি Chrome বা Edge-এ Sabaq ওয়েবসাইটের (sabaq-study.pages.dev) সঙ্গে কাজ করে।","Sabaq Blocker ডাউনলোড করুন","Chrome বা Edge-এ কীভাবে যোগ করবেন (এটি এখনো Chrome Web Store-এ নেই)",
+    "ডাউনলোড করা ফাইলটি আনজিপ করুন: রাইট-ক্লিক করে Extract All বেছে নিন।","chrome://extensions খুলুন (Edge-এ: edge://extensions) এবং Developer mode চালু করুন।","Load unpacked-এ ক্লিক করে আনজিপ করা sabaq-blocker ফোল্ডারটি বেছে নিন, যার ভেতরে manifest.json আছে।",
     "এই পেজে ফিরে এসে রিলোড করুন। এটি জানাবে যে ব্লকার চালু আছে।","ফোনে অ্যাপ ব্লক করুন",
     "Android: Settings → Digital Wellbeing & parental controls → Focus mode খুলুন। অ্যাপগুলো বেছে নিন (Facebook, Instagram, Threads, YouTube…), তারপর Turn on now চাপুন, অথবা পড়ার সময়ের জন্য সময়সূচি ঠিক করুন।",
     "iPhone: Settings → Screen Time → App Limits → Add Limit খুলুন। অ্যাপ বা Social বিভাগ বেছে নিন, ১ মিনিটের মতো ছোট সীমা দিন এবং Add চাপুন। পড়ার সময় সেগুলো লুকাতে Settings → Focus-ও ব্যবহার করতে পারেন।",
@@ -969,8 +969,8 @@ const BLK_UI = {
   fr:["Bloqueur d'applis et de sites","Choisis ce qui te distrait. Sabaq le bloque pendant que le minuteur tourne.","Ajoute un site, ex. netflix.com","Ajouter",
     "Bloquer ces sites pendant le minuteur","Sabaq Blocker est actif dans ce navigateur. Tes sites choisis seront bloqués pendant la concentration.","Blocage en cours, jusqu'à la fin de cette séance.",
     "Un site web ne peut pas bloquer d'autres sites tout seul. Pour les bloquer sur un ordinateur, ajoute l'extension gratuite Sabaq Blocker à Chrome ou Edge.",
-    "Le bloqueur fonctionne avec le site Sabaq (sabaq-study.pages.dev) dans Chrome ou Edge.","Télécharger Sabaq Blocker","Comment l'ajouter à Chrome ou Edge",
-    "Décompresse le fichier téléchargé.","Ouvre chrome://extensions (dans Edge : edge://extensions) et active le Mode développeur.","Clique sur Charger l'extension non empaquetée et choisis le dossier sabaq-blocker.",
+    "Le bloqueur fonctionne avec le site Sabaq (sabaq-study.pages.dev) dans Chrome ou Edge.","Télécharger Sabaq Blocker","Comment l'ajouter à Chrome ou Edge (elle n'est pas encore sur le Chrome Web Store)",
+    "Décompresse le fichier téléchargé : clic droit, puis Extraire tout.","Ouvre chrome://extensions (dans Edge : edge://extensions) et active le Mode développeur.","Clique sur Charger l'extension non empaquetée et choisis le dossier sabaq-blocker décompressé, celui qui contient manifest.json.",
     "Reviens sur cette page et recharge-la. Elle indiquera que le bloqueur est actif.","Bloquer des applis sur un téléphone",
     "Android : ouvre Paramètres → Bien-être numérique et contrôle parental → Mode Concentration. Choisis les applis (Facebook, Instagram, Threads, YouTube…), puis appuie sur Activer maintenant, ou programme tes heures d'étude.",
     "iPhone : ouvre Réglages → Temps d'écran → Limites d'apps → Ajouter une limite. Choisis les apps ou la catégorie Réseaux sociaux, mets une limite courte comme 1 minute et appuie sur Ajouter. Tu peux aussi utiliser Réglages → Concentration pour les masquer pendant que tu étudies.",
@@ -978,8 +978,8 @@ const BLK_UI = {
   zh:["应用和网站屏蔽","选出让你分心的内容，专注计时期间 Sabaq 会屏蔽它们。","添加网站，例如 netflix.com","添加",
     "专注计时期间屏蔽这些","此浏览器已启用 Sabaq Blocker，专注期间会屏蔽你选的网站。","正在屏蔽，直到本轮专注结束。",
     "网站本身无法屏蔽其他网站。要在电脑上屏蔽它们，请在 Chrome 或 Edge 中添加免费的 Sabaq Blocker。",
-    "屏蔽功能需在 Chrome 或 Edge 中配合 Sabaq 网站（sabaq-study.pages.dev）使用。","下载 Sabaq Blocker","如何添加到 Chrome 或 Edge",
-    "解压下载的文件。","打开 chrome://extensions（Edge 中为 edge://extensions），开启“开发者模式”。","点击“加载已解压的扩展程序”，选择 sabaq-blocker 文件夹。",
+    "屏蔽功能需在 Chrome 或 Edge 中配合 Sabaq 网站（sabaq-study.pages.dev）使用。","下载 Sabaq Blocker","如何添加到 Chrome 或 Edge（尚未上架 Chrome 网上应用店）",
+    "解压下载的文件：右键点击它，选择“全部解压缩”。","打开 chrome://extensions（Edge 中为 edge://extensions），开启“开发者模式”。","点击“加载已解压的扩展程序”，选择解压出的 sabaq-blocker 文件夹（里面有 manifest.json）。",
     "回到此页面并刷新，会显示屏蔽已启用。","在手机上屏蔽应用",
     "安卓：打开“设置”→“数字健康和家长控制”→“专注模式”。选择应用（Facebook、Instagram、Threads、YouTube 等），然后点“立即开启”，或为学习时间设置时间表。",
     "iPhone：打开“设置”→“屏幕使用时间”→“App 限额”→“添加限额”。选择应用或“社交”类别，设置很短的时间（如 1 分钟），然后点“添加”。也可以用“设置”→“专注模式”在学习时隐藏它们。",

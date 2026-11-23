@@ -14,7 +14,8 @@ A homework helper for students, with the page in English, العربية, Españ
 - An English translation under any answer, or under every answer
 - Quran verses in answers come word for word from the alquran.cloud database, with a published translation
 - Study plans, flashcards and quizzes made from a topic or class notes
-- A focus timer with your own focus and break lengths, counting minutes per assignment
+- A focus timer with your own focus and break lengths in hours and minutes, counting minutes per assignment
+- An app and site blocker: the Sabaq Blocker extension blocks Facebook, Instagram, Threads, YouTube and any sites you choose while the focus timer runs
 - Read-aloud and voice typing, using the browser's own speech features
 
 It is free and needs no account. Your homework stays in your own browser on your device.
@@ -33,3 +34,4 @@ To deploy the worker: `cd worker && npx wrangler deploy`. The pages allowed to u
 - `setup/`: the setup page, with an Install button, steps for each device and a QR code
 - `manifest.webmanifest`, `sw.js` and `icons/`: let the app be installed and work offline
 - `worker/`: the free AI helper on Cloudflare Workers
+- `blocker/`: the Sabaq Blocker browser extension (`sabaq-blocker/`), its privacy policy, and everything needed to publish it on the Chrome Web Store (`STORE.md`, `store/`)
