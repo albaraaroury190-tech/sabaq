@@ -165,6 +165,12 @@ textarea::placeholder{color:var(--muted);opacity:.8}
 .a table{display:block;overflow-x:auto;border-collapse:collapse;margin:0 0 .75em}
 .a th,.a td{border:1px solid var(--rule);padding:6px 10px;text-align:start}
 .a blockquote{margin:0 0 .75em;padding-inline-start:12px;border-inline-start:3px solid var(--rule);color:var(--muted)}
+.a .ayah{font-family:"Noto Naskh Arabic",serif;font-size:1.2em;line-height:2;color:var(--ink);unicode-bidi:isolate}
+.a blockquote:has(.ayah){border-inline-start-color:var(--ok);background:var(--paper);border-radius:0 8px 8px 0;padding:8px 12px}
+.ayah-ref{white-space:nowrap}
+.ayah-nav{display:inline-flex;gap:4px;margin-inline-start:6px;vertical-align:middle}
+.ayah-nav button{font:inherit;font-size:.75rem;border:1px solid var(--rule);background:var(--sheet);color:var(--muted);border-radius:999px;padding:0 8px;line-height:1.7;cursor:pointer}
+.ayah-nav button:hover{border-color:var(--ok);color:var(--ok)}
 .thinking{display:flex;align-items:center;gap:10px;color:var(--muted);font-style:italic}
 .dots{display:inline-flex;gap:4px}
 .dots i{width:6px;height:6px;border-radius:50%;background:var(--pen);animation:blink 1.2s infinite ease-in-out}
@@ -897,6 +903,10 @@ const EN_TR_UI = {
   zh:["英文翻译","在每个回答下方附上英文翻译"]
 };
 Object.keys(EN_TR_UI).forEach(l=>{UI[l].enTr=EN_TR_UI[l][0]; UI[l].alsoEn=EN_TR_UI[l][1]});
+// Buttons by a Quran verse in an answer: previous verse, next verse
+const VERSE_NAV_UI = {en:["Previous verse","Next verse"],ar:["الآية السابقة","الآية التالية"],es:["Versículo anterior","Versículo siguiente"],
+  ur:["پچھلی آیت","اگلی آیت"],hi:["पिछली आयत","अगली आयत"],bn:["আগের আয়াত","পরের আয়াত"],fr:["Verset précédent","Verset suivant"],zh:["上一节","下一节"]};
+Object.keys(VERSE_NAV_UI).forEach(l=>{UI[l].prevVerse=VERSE_NAV_UI[l][0]; UI[l].nextVerse=VERSE_NAV_UI[l][1]});
 const SUBJECT_EN = {math:"Mathematics",science:"Science",writing:"Language and writing",history:"History and social studies",computing:"Computer science",other:"General"};
 const LEVEL_EN = {primary:"primary school",middle:"middle school",high:"high school",uni:"university"};
 const TASK_RULES = {
@@ -955,7 +965,7 @@ function fixScript(text, code, keepWords){
   const foreign = SCRIPTS.filter(s=>!allowed.has(s)).map(s=>"\\p{Script="+s+"}").join("|");
   const strayRe = new RegExp("(?:"+foreign+")[\\p{M}\\u200c\\u200d]*","gu"), hasStray = new RegExp(foreign,"u");
   const ownRe = new RegExp("\\p{Script="+own+"}","u");
-  return String(text).split(/(```[\s\S]*?(?:```|$)|`[^`\n]*`)/).map((part,i)=>{
+  return String(text).split(/(```[\s\S]*?(?:```|$)|`[^`\n]*`|\[\[\s*quran[^\]]*\]\])/i).map((part,i)=>{
     if(i%2) return part;
     return part.replace(/[\p{L}\p{M}\p{N}‌‍]+/gu, w => !hasStray.test(w) || (keepWords && !ownRe.test(w)) ? w : w.replace(strayRe,""))
       .replace(/[ \t]{2,}/g," ");
@@ -1121,7 +1131,99 @@ function md(text){
 }
 function answerEl(text, code){
   const a=document.createElement("div"); a.className="a"; a.lang=code; a.dir=RTL.has(code)?"rtl":"ltr";
-  a.innerHTML=md(text); return a;
+  a.innerHTML=md(quranize(text, code)); return verseButtons(a);
+}
+
+/* ---------- Quran verses ----------
+   Answers never write out a verse: they write a marker like [[quran:2:128]], and the page fills in the exact Arabic
+   text, with a published translation in the answer's language when there is one, from the alquran.cloud database. */
+const QURAN_API = "https://api.alquran.cloud/v1/ayah/";
+const QURAN_TR = {en:"en.sahih",ur:"ur.jalandhry",hi:"hi.hindi",bn:"bn.bengali",es:"es.cortes",fr:"fr.hamidullah",zh:"zh.jian",
+  tr:"tr.diyanet",id:"id.indonesian",ms:"ms.basmeih",sw:"sw.barwani",de:"de.bubenheim",it:"it.piccardo",ru:"ru.kuliev",
+  fa:"fa.fooladvand",ps:"ps.abdulwali",ta:"ta.tamil",ja:"ja.japanese",ko:"ko.korean",so:"so.abduh",ha:"ha.gumi",am:"am.sadiq",pt:"pt.elhayek"};
+const QURAN_RE = /\[\[\s*quran\s*:\s*(\d{1,3})\s*:\s*(\d{1,3})(?:\s*-\s*(\d{1,3}))?\s*(?:\|\s*([^\]|]{0,40}))?\s*\]\]/gi;
+const quranCache = {};  // "2:128|en" -> {ar, tr, name, en} once loaded, "loading" or "failed"
+const quranFound = {};  // "2:128|word" -> the verse near 2:128 that contains the word, or "loading"
+const quranShift = {};  // marker -> verses moved by the student with Previous / Next
+// Previous / Next verse buttons after each verse reference in an answer.
+function verseButtons(root){
+  root.querySelectorAll(".ayah-ref").forEach(ref=>{
+    const m=decodeURIComponent(ref.dataset.q||""); if(!m) return;
+    const nav=document.createElement("span"); nav.className="ayah-nav";
+    [["prevVerse",-1],["nextVerse",1]].forEach(([k,d])=>{
+      const b=document.createElement("button"); b.type="button"; b.textContent=t(k);
+      b.addEventListener("click",()=>{quranShift[m]=(quranShift[m]||0)+d; render()});
+      nav.append(b);
+    });
+    ref.after(nav);
+  });
+  return root;
+}
+let quranRedraw = 0;
+function quranRedrawSoon(){clearTimeout(quranRedraw); quranRedraw=setTimeout(render,30)}
+const quranPlain = t => String(t).replace(/[ؐ-ًؚ-ٰٟۖ-ۭـ]/g,"").replace(/[ٱأإآ]/g,"ا").replace(/ى/g,"ي").replace(/\s+/g," ");
+// Models often know what a verse means better than its number. The marker carries two or three key English words
+// from the verse's meaning; of the verses within 10 of the given number, the one whose Saheeh International
+// translation has the most of those words is used (the nearest one on a tie), or the given verse if none has any.
+function quranFind(s, a, words){
+  const key=s+":"+a+"|"+words;
+  if(quranFound[key]===undefined){
+    quranFound[key]="loading";
+    const stems=String(words).toLowerCase().split(/[^a-z']+/).filter(w=>w.length>2).slice(0,5).map(w=>w.length>4 ? w.replace(/(ing|ed|es|s)$/,"") : w);
+    if(!stems.length){quranFound[key]=a; return a}
+    const from=Math.max(1,a-10);
+    fetch("https://api.alquran.cloud/v1/surah/"+s+"/en.sahih?offset="+(from-1)+"&limit=21").then(r=>r.ok?r.json():Promise.reject())
+      .then(j=>{
+        const scored=j.data.ayahs.map(v=>{const t=v.text.toLowerCase(); return {n:v.numberInSurah, score:stems.filter(w=>new RegExp("\\b"+w).test(t)).length}})
+          .filter(x=>x.score>0).sort((x,y)=>(y.score-x.score)||(Math.abs(x.n-a)-Math.abs(y.n-a)));
+        quranFound[key]=scored.length ? scored[0].n : a;
+      })
+      .catch(()=>{quranFound[key]=a})
+      .finally(quranRedrawSoon);
+  }
+  return quranFound[key];
+}
+function quranVerse(s, a, code){
+  const key=s+":"+a+"|"+code;
+  if(quranCache[key]===undefined){
+    quranCache[key]="loading";
+    const eds=["quran-uthmani"].concat(code!=="ar" && QURAN_TR[code] ? [QURAN_TR[code]] : []);
+    fetch(QURAN_API+s+":"+a+"/editions/"+eds.join(",")).then(r=>r.ok?r.json():Promise.reject())
+      .then(j=>{
+        const d=j.data;
+        // The database starts verse 1 of most surahs with the basmala; the verse itself follows it.
+        let ar=d[0].text; if(a===1 && s!==1) ar=ar.replace(/^\S+\s+\S+\s+\S+\s+\S+\s+/,"");
+        quranCache[key]={ar, tr:d[1]?d[1].text:"", name:d[0].surah.name, en:d[0].surah.englishName};
+      })
+      .catch(()=>{quranCache[key]="failed"})
+      .finally(quranRedrawSoon);
+  }
+  return quranCache[key];
+}
+function quranize(text, code){
+  return String(text).replace(QURAN_RE,(m,s,a,b,word)=>{
+    s=+s; a=+a;
+    if(s<1 || s>114 || a<1) return m;
+    if(word && !b){
+      const found=quranFind(s,a,word);
+      if(found==="loading") return " ("+(code==="ar" ? "القرآن " : "Quran ")+s+":"+a+") ";
+      a=found;
+    }
+    b=b?Math.min(+b,+a+4):a;
+    if(b<a) return m;
+    // The student can step to the verse before or after with the buttons by the reference.
+    const shift=Math.max(1-a, quranShift[m]||0); a+=shift; b+=shift;
+    const vs=[]; let ready=true;
+    for(let i=a;i<=b;i++){const v=quranVerse(s,i,code); if(typeof v==="object") vs.push(v); else ready=false}
+    const where=s+":"+a+(b>a?"-"+b:"");
+    const ref=vs[0] ? (code==="ar" ? vs[0].name : vs[0].en)+" "+where : (code==="ar" ? "القرآن " : "Quran ")+where;
+    if(!ready) return " ("+ref+") ";
+    const ar=vs.map(v=>v.ar).join(" ۝ "), tr=vs.map(v=>v.tr).filter(Boolean).join(" ");
+    const html = window.marked && window.DOMPurify;
+    const verse = html ? '<span class="ayah" lang="ar" dir="rtl">«'+ar+'»</span>' : "«"+ar+"»";
+    const refText = html ? '<span class="ayah-ref" data-q="'+encodeURIComponent(m)+'">('+ref+')</span>' : "("+ref+")";
+    return "\n\n> "+verse+" "+refText+(tr?"\n>\n> "+tr:"")+"\n\n";
+  });
 }
 function questionEl(text, img){
   const q=document.createElement("div"); q.className="q";
@@ -1170,7 +1272,7 @@ function englishEl(en){
 let raf=0;
 function streamUpdate(entry){
   if(raf) return;
-  raf=requestAnimationFrame(()=>{raf=0; if(entry.el && entry.el.isConnected) entry.el.innerHTML=md(entry.text); else render()});
+  raf=requestAnimationFrame(()=>{raf=0; if(entry.el && entry.el.isConnected){entry.el.innerHTML=md(quranize(entry.text, entry.lang||"en")); verseButtons(entry.el)} else render()});
 }
 function setStatus(msg){$("status").textContent=msg||""}
 function msgFor(code){
@@ -1202,8 +1304,15 @@ function buildPrompt(q){
     "- Use Markdown: short paragraphs, **bold** step titles, numbered or bulleted lists where they help.",
     "- Put every equation, formula, chemical formula and short code expression inside backticks, like `2x + 6 = 14`. Use plain Unicode maths symbols (×, ÷, −, ², √, π, ≤). Never use LaTeX or dollar-sign maths.",
     "- Put longer code in fenced code blocks.",
-    "- Write quotations in "+english+" too, never in another language. When quoting the Quran, give the verse in Arabic"+(code==="ar"?"":" followed by its meaning in "+english)+", with its surah and verse number, like (Al-Baqarah 2:129).",
-    "- Quote a Quran verse or a hadith only when you are sure of its exact wording and of who said it and where it is. Never attribute a verse to a different prophet, person or surah. If you are not sure, describe it in your own words instead of quoting it. If the student's own text quotes or names a verse, keep the student's verse and don't swap it for another.",
+    "- Write quotations in "+english+" too, never in another language.",
+    ...(IN_CLAUDE ? [
+    "- When quoting the Quran, give the verse in Arabic"+(code==="ar"?"":" followed by its meaning in "+english)+", with its surah and verse number, like (Al-Baqarah 2:129).",
+    "- Quote a verse only when you are sure of its exact wording and of who said it and where it is. Never attribute a verse to a different prophet, person or surah. If you are not sure, describe it in your own words instead of quoting it. If the student's own text quotes or names a verse, keep the student's verse and don't swap it for another."
+    ] : [
+    "- Never write out a verse of the Quran yourself, not even part of one. To quote a verse, write only its marker: the surah number, the verse number and two or three key English words from the verse's meaning, in the form [[quran:SURAH:VERSE|WORDS]], for example [[quran:94:6|hardship ease]]. Always write the marker exactly like that, in English letters, whatever language you reply in. For a short passage, use a range like [[quran:SURAH:FIRST-LAST]]. The page replaces the marker with the exact Arabic verse and a published translation, so don't add the verse text or its meaning next to it.",
+    "- Use a marker only when you are sure which verse it is. Never attribute a verse to a different prophet, person or surah. If you are not sure of the verse number, describe the verse in your own words without a marker. If the student's own text quotes or names a verse, use the marker for that same verse."
+    ]),
+    "- Quote a hadith only when you are sure of its wording and source, and name the collection it is in.",
     "- Match the explanation to the student's level and define any technical word the first time you use it.",
     "- No greeting and no sign-off.",
     "- Unless you were told to give hints only, end with one short line with a bold title that gives a similar practice exercise or a question to check understanding.",
@@ -1259,10 +1368,10 @@ async function translateEntry(entry){
   if(!sample || busy || !entry.text) return;
   busy=true; ctl=new AbortController(); setStatus("");
   $("askBtn").disabled=true; $("stopBtn").hidden=false;
-  entry.en={text:"",pending:true,el:null}; render();
+  entry.en={text:"",pending:true,el:null,lang:"en"}; render();
   const ask=[{role:"user",content:[
     "Translate the text below into English. Keep the same Markdown layout: headings, bold, lists and paragraphs.",
-    "Translate quotations too. For a verse of the Quran, give its usual English meaning in quotation marks followed by the reference, like (Quran 17:85).",
+    "Translate quotations too. Keep every marker like [[quran:2:128]] exactly as it is: the page fills in that verse and its English translation.",
     "Keep anything inside backticks exactly as it is. Reply with only the translation, with no note before or after it.",
     "", '"""', entry.text, '"""'].join("\n")}];
   const opts={signal:ctl.signal,cache:false,onText:({text})=>{entry.en.text=text;entry.en.pending=false;streamUpdate(entry.en)}};
