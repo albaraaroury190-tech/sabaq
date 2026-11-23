@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "Sabaq Blocker",
+  "version": "1.0.0",
+  "description": "Blocks the sites you choose in Sabaq Study Desk while its focus timer runs.",
+  "icons": { "128": "icon.png" },
+  "action": { "default_icon": "icon.png", "default_title": "Sabaq Blocker", "default_popup": "blocked.html?popup=1" },
+  "permissions": ["declarativeNetRequest", "storage", "alarms", "tabs"],
+  "host_permissions": ["<all_urls>"],
+  "background": { "service_worker": "background.js" },
+  "content_scripts": [{
+    "matches": ["https://sabaq-study.pages.dev/*", "https://albaraaroury190-tech.github.io/sabaq/*", "http://localhost:8080/*"],
+    "js": ["content.js"],
+    "run_at": "document_start"
+  }]
+}

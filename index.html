@@ -372,6 +372,26 @@ button.wd:hover{border-color:var(--pen)}
 .tm-presets button{border:1px solid var(--rule);background:transparent;border-radius:999px;padding:2px 10px;font-size:.85rem;cursor:pointer;font-variant-numeric:tabular-nums}
 .tm-presets button:hover{border-color:var(--pen);color:var(--pen)}
 .tm-presets button[aria-pressed="true"]{border-color:var(--pen);background:var(--pen-soft)}
+.tm-nudge{margin:0;padding:8px 12px;border-radius:8px;background:var(--hi);color:var(--ink);font-size:.92rem}
+.blocker{display:grid;gap:12px;margin-top:24px;padding-top:20px;border-top:1px solid var(--rule)}
+.blocker h3{margin:0;font-size:1.1rem}
+.blk-intro,.blk-status{margin:0;color:var(--muted);font-size:.95rem}
+.blk-status.on{color:var(--ok);font-weight:700}
+.blk-sites{display:flex;flex-wrap:wrap;gap:8px}
+.blk-site{display:inline-flex;align-items:center;gap:6px;border:1px solid var(--rule);border-radius:999px;padding:4px 12px;cursor:pointer;font-size:.92rem;background:var(--paper)}
+.blk-site:has(input:checked){border-color:var(--pen);background:var(--pen-soft)}
+.blk-site input{margin:0;accent-color:var(--pen);cursor:pointer}
+.blk-site button{border:0;background:transparent;color:var(--muted);cursor:pointer;padding:0 0 0 2px;line-height:0}
+.blk-site button:hover{color:var(--margin)}
+.blk-site button svg{width:12px;height:12px}
+.blk-add{display:flex;gap:8px;max-width:420px}
+.blk-add input{flex:1;min-width:0;border:1px solid var(--rule);border-radius:8px;background:var(--paper);padding:8px 10px}
+.blk-pc{display:grid;gap:8px;justify-items:start}
+.blk-dl{display:inline-block;background:var(--pen);color:var(--on-pen);text-decoration:none;font-weight:700;border-radius:8px;padding:8px 14px}
+.blocker details{font-size:.92rem;color:var(--muted)}
+.blocker summary{cursor:pointer;color:var(--pen);font-weight:700}
+.blocker ol{margin:8px 0 0;padding-inline-start:22px;display:grid;gap:4px}
+.blk-phone p{margin:8px 0 0}
 .today-min{margin:0;color:var(--muted)}
 .today-min strong{color:var(--ink);font-size:1.2rem;font-variant-numeric:tabular-nums}
 .mic{background:transparent}
@@ -614,9 +634,30 @@ button.wd:hover{border-color:var(--pen)}
             <button type="button" class="primary" id="tmStart"></button>
             <button type="button" class="ghost" id="tmReset" data-i18n="reset"></button>
           </div>
+          <p class="tm-nudge" id="tmNudge" role="status" hidden></p>
           <p class="today-min"><span data-i18n="todayMin"></span>: <strong id="tmToday">0</strong> <span data-i18n="minLbl"></span></p>
         </div>
       </div>
+      <section class="blocker" aria-labelledby="blkTitle">
+        <h3 id="blkTitle" data-i18n="blkTitle"></h3>
+        <p class="blk-intro" data-i18n="blkIntro"></p>
+        <div class="blk-sites" id="blkSites" role="group" aria-labelledby="blkTitle"></div>
+        <form class="blk-add" id="blkAddForm" novalidate>
+          <input type="text" id="blkAddInput" dir="ltr" autocomplete="off" maxlength="120" aria-labelledby="blkAddBtn">
+          <button type="submit" class="tool" id="blkAddBtn" data-i18n="blkAdd"></button>
+        </form>
+        <label class="check"><input type="checkbox" id="blkOn"><span data-i18n="blkOn"></span></label>
+        <p class="blk-status" id="blkStatus" role="status"></p>
+        <div class="blk-pc" id="blkPc">
+          <a class="blk-dl" id="blkDownload" href="https://sabaq-study.pages.dev/blocker/sabaq-blocker.zip" download target="_blank" rel="noopener" data-i18n="blkDownload"></a>
+          <details><summary data-i18n="blkPcHow"></summary>
+            <ol><li data-i18n="blkPc1"></li><li data-i18n="blkPc2"></li><li data-i18n="blkPc3"></li><li data-i18n="blkPc4"></li></ol>
+          </details>
+        </div>
+        <details class="blk-phone" id="blkPhone"><summary data-i18n="blkPhone"></summary>
+          <p data-i18n="blkAndroid"></p><p data-i18n="blkIphone"></p>
+        </details>
+      </section>
     </div>
   </section>
 </div>
@@ -867,6 +908,84 @@ const IMG_UI = {
 };
 Object.keys(IMG_UI).forEach(l=>IMG_KEYS.forEach((k,i)=>{UI[l][k]=IMG_UI[l][i]}));
 Object.keys(TM_LEN_UI).forEach(l=>TM_LEN_KEYS.forEach((k,i)=>{UI[l][k]=TM_LEN_UI[l][i]}));
+// App and site blocker strings, in the order of BLK_KEYS ({n} = times the student left during focus)
+const BLK_KEYS = ["blkTitle","blkIntro","blkAddPh","blkAdd","blkOn","blkExtOn","blkNow","blkExtOff","blkWebOnly","blkDownload","blkPcHow",
+  "blkPc1","blkPc2","blkPc3","blkPc4","blkPhone","blkAndroid","blkIphone","blkLeft","blkBad","blkRemove"];
+const BLK_UI = {
+  en:["App and site blocker","Choose what distracts you. Sabaq blocks it while the focus timer runs.","Add a website, e.g. netflix.com","Add",
+    "Block these while the focus timer runs","Sabaq Blocker is on in this browser. Your chosen sites will be blocked during focus.","Blocking now, until this focus round ends.",
+    "A website can't block other sites by itself. To block them on a computer, add the free Sabaq Blocker to Chrome or Edge.",
+    "The blocker works with the Sabaq website (sabaq-study.pages.dev) in Chrome or Edge.","Download Sabaq Blocker","How to add it to Chrome or Edge",
+    "Unzip the downloaded file.","Open chrome://extensions (in Edge: edge://extensions) and turn on Developer mode.","Click Load unpacked and choose the sabaq-blocker folder.",
+    "Come back to this page and reload it. It will say the blocker is on.","Block apps on a phone",
+    "Android: open Settings → Digital Wellbeing & parental controls → Focus mode. Pick the apps (Facebook, Instagram, Threads, YouTube…), then tap Turn on now, or set a schedule for your study time.",
+    "iPhone: open Settings → Screen Time → App Limits → Add Limit. Pick the apps or the Social category, set a short limit such as 1 minute, and tap Add. You can also use Settings → Focus to hide them while you study.",
+    "You left Sabaq {n} times during this focus round. Your apps can wait!","Write a website address, like netflix.com.","Remove"],
+  ar:["حاجب التطبيقات والمواقع","اختر ما يشتّت انتباهك، وسيحجبه سبق أثناء تشغيل مؤقت التركيز.","أضف موقعًا، مثل netflix.com","أضف",
+    "احجب هذه أثناء تشغيل مؤقت التركيز","حاجب سبق مفعّل في هذا المتصفح. ستُحجب المواقع التي اخترتها أثناء التركيز.","الحجب يعمل الآن حتى تنتهي جولة التركيز هذه.",
+    "لا يستطيع موقع إلكتروني حجب مواقع أخرى بمفرده. لحجبها على الكمبيوتر، أضف حاجب سبق المجاني إلى Chrome أو Edge.",
+    "يعمل الحاجب مع موقع سبق (sabaq-study.pages.dev) في Chrome أو Edge.","نزّل حاجب سبق","طريقة إضافته إلى Chrome أو Edge",
+    "فك ضغط الملف الذي نزّلته.","افتح chrome://extensions (في Edge: edge://extensions) وفعّل وضع المطوّر (Developer mode).","اضغط تحميل غير المضغوط (Load unpacked) واختر مجلد sabaq-blocker.",
+    "ارجع إلى هذه الصفحة وأعد تحميلها، وستظهر رسالة بأن الحاجب مفعّل.","حجب التطبيقات على الهاتف",
+    "أندرويد: افتح الإعدادات ← الصحة الرقمية وأدوات الرقابة الأبوية ← وضع التركيز. اختر التطبيقات (فيسبوك، إنستغرام، ثريدز، يوتيوب…) ثم اضغط التشغيل الآن، أو حدّد جدولًا لوقت دراستك.",
+    "آيفون: افتح الإعدادات ← مدة استخدام الجهاز ← حدود التطبيقات ← إضافة حد. اختر التطبيقات أو فئة التواصل الاجتماعي، وحدّد مدة قصيرة مثل دقيقة واحدة، ثم اضغط إضافة. ويمكنك أيضًا استخدام الإعدادات ← التركيز لإخفائها أثناء الدراسة.",
+    "غادرت سبق {n} مرات خلال جولة التركيز هذه. تطبيقاتك يمكنها الانتظار!","اكتب عنوان موقع، مثل netflix.com.","إزالة"],
+  es:["Bloqueador de apps y sitios","Elige lo que te distrae. Sabaq lo bloquea mientras corre el temporizador.","Añade un sitio web, p. ej. netflix.com","Añadir",
+    "Bloquear esto mientras corre el temporizador","Sabaq Blocker está activo en este navegador. Tus sitios elegidos se bloquearán durante la concentración.","Bloqueando ahora, hasta que termine esta ronda.",
+    "Un sitio web no puede bloquear otros sitios por sí solo. Para bloquearlos en un ordenador, añade el bloqueador gratuito Sabaq Blocker a Chrome o Edge.",
+    "El bloqueador funciona con el sitio de Sabaq (sabaq-study.pages.dev) en Chrome o Edge.","Descargar Sabaq Blocker","Cómo añadirlo a Chrome o Edge",
+    "Descomprime el archivo descargado.","Abre chrome://extensions (en Edge: edge://extensions) y activa el Modo de desarrollador.","Haz clic en Cargar descomprimida y elige la carpeta sabaq-blocker.",
+    "Vuelve a esta página y recárgala. Dirá que el bloqueador está activo.","Bloquear apps en el móvil",
+    "Android: abre Ajustes → Bienestar digital y controles parentales → Modo concentración. Elige las apps (Facebook, Instagram, Threads, YouTube…) y toca Activar ahora, o programa tu horario de estudio.",
+    "iPhone: abre Ajustes → Tiempo de uso → Límites de apps → Añadir límite. Elige las apps o la categoría Redes sociales, pon un límite corto como 1 minuto y toca Añadir. También puedes usar Ajustes → Concentración para ocultarlas mientras estudias.",
+    "Saliste de Sabaq {n} veces en esta ronda. ¡Tus apps pueden esperar!","Escribe la dirección de un sitio, como netflix.com.","Quitar"],
+  ur:["ایپ اور سائٹ بلاکر","جو چیز آپ کا دھیان بٹاتی ہے اسے چنیں۔ توجہ کا ٹائمر چلنے کے دوران سبق اسے بلاک کر دے گا۔","ویب سائٹ شامل کریں، مثلاً netflix.com","شامل کریں",
+    "توجہ کا ٹائمر چلنے کے دوران انہیں بلاک کریں","اس براؤزر میں سبق بلاکر آن ہے۔ توجہ کے دوران آپ کی چنی ہوئی سائٹس بلاک رہیں گی۔","ابھی بلاک ہو رہا ہے، یہ توجہ کا دور ختم ہونے تک۔",
+    "کوئی ویب سائٹ خود دوسری سائٹس بلاک نہیں کر سکتی۔ کمپیوٹر پر بلاک کرنے کے لیے مفت سبق بلاکر Chrome یا Edge میں شامل کریں۔",
+    "بلاکر Chrome یا Edge میں سبق کی ویب سائٹ (sabaq-study.pages.dev) کے ساتھ کام کرتا ہے۔","سبق بلاکر ڈاؤن لوڈ کریں","اسے Chrome یا Edge میں کیسے شامل کریں",
+    "ڈاؤن لوڈ کی گئی فائل کو ان زپ کریں۔","chrome://extensions کھولیں (Edge میں: edge://extensions) اور Developer mode آن کریں۔","Load unpacked پر کلک کریں اور sabaq-blocker فولڈر چنیں۔",
+    "اس صفحے پر واپس آ کر اسے دوبارہ لوڈ کریں۔ یہ بتائے گا کہ بلاکر آن ہے۔","فون پر ایپس بلاک کریں",
+    "اینڈرائیڈ: Settings ← Digital Wellbeing & parental controls ← Focus mode کھولیں۔ ایپس چنیں (Facebook، Instagram، Threads، YouTube…) پھر Turn on now دبائیں، یا پڑھائی کے وقت کا شیڈول بنائیں۔",
+    "آئی فون: Settings ← Screen Time ← App Limits ← Add Limit کھولیں۔ ایپس یا Social کیٹیگری چنیں، 1 منٹ جیسی مختصر حد رکھیں اور Add دبائیں۔ آپ Settings ← Focus سے بھی پڑھائی کے دوران انہیں چھپا سکتے ہیں۔",
+    "اس توجہ کے دور میں آپ {n} بار سبق سے باہر گئے۔ آپ کی ایپس انتظار کر سکتی ہیں!","ویب سائٹ کا پتہ لکھیں، جیسے netflix.com۔","ہٹائیں"],
+  hi:["ऐप और साइट ब्लॉकर","जो चीज़ आपका ध्यान भटकाती है उसे चुनें। फ़ोकस टाइमर चलते समय Sabaq उसे ब्लॉक करेगा।","वेबसाइट जोड़ें, जैसे netflix.com","जोड़ें",
+    "फ़ोकस टाइमर चलते समय इन्हें ब्लॉक करें","इस ब्राउज़र में Sabaq Blocker चालू है। फ़ोकस के दौरान आपकी चुनी हुई साइटें ब्लॉक रहेंगी।","अभी ब्लॉक हो रहा है, यह फ़ोकस राउंड ख़त्म होने तक।",
+    "कोई वेबसाइट अपने आप दूसरी साइटें ब्लॉक नहीं कर सकती। कंप्यूटर पर उन्हें ब्लॉक करने के लिए मुफ़्त Sabaq Blocker को Chrome या Edge में जोड़ें।",
+    "ब्लॉकर Chrome या Edge में Sabaq वेबसाइट (sabaq-study.pages.dev) के साथ काम करता है।","Sabaq Blocker डाउनलोड करें","इसे Chrome या Edge में कैसे जोड़ें",
+    "डाउनलोड की गई फ़ाइल को अनज़िप करें।","chrome://extensions खोलें (Edge में: edge://extensions) और Developer mode चालू करें।","Load unpacked पर क्लिक करें और sabaq-blocker फ़ोल्डर चुनें।",
+    "इस पेज पर लौटकर इसे रीलोड करें। यह बताएगा कि ब्लॉकर चालू है।","फ़ोन पर ऐप ब्लॉक करें",
+    "Android: Settings → Digital Wellbeing & parental controls → Focus mode खोलें। ऐप चुनें (Facebook, Instagram, Threads, YouTube…), फिर Turn on now दबाएँ, या पढ़ाई के समय का शेड्यूल बनाएँ।",
+    "iPhone: Settings → Screen Time → App Limits → Add Limit खोलें। ऐप या Social श्रेणी चुनें, 1 मिनट जैसी छोटी सीमा रखें और Add दबाएँ। पढ़ाई के समय उन्हें छिपाने के लिए Settings → Focus भी इस्तेमाल कर सकते हैं।",
+    "इस फ़ोकस राउंड में आप {n} बार Sabaq से बाहर गए। आपके ऐप इंतज़ार कर सकते हैं!","वेबसाइट का पता लिखें, जैसे netflix.com।","हटाएँ"],
+  bn:["অ্যাপ ও সাইট ব্লকার","যা আপনার মনোযোগ নষ্ট করে তা বেছে নিন। ফোকাস টাইমার চলার সময় Sabaq সেটি ব্লক করবে।","একটি ওয়েবসাইট যোগ করুন, যেমন netflix.com","যোগ করুন",
+    "ফোকাস টাইমার চলার সময় এগুলো ব্লক করুন","এই ব্রাউজারে Sabaq Blocker চালু আছে। ফোকাসের সময় আপনার বেছে নেওয়া সাইটগুলো ব্লক থাকবে।","এখন ব্লক চলছে, এই ফোকাস রাউন্ড শেষ না হওয়া পর্যন্ত।",
+    "কোনো ওয়েবসাইট নিজে থেকে অন্য সাইট ব্লক করতে পারে না। কম্পিউটারে সেগুলো ব্লক করতে বিনামূল্যের Sabaq Blocker Chrome বা Edge-এ যোগ করুন।",
+    "ব্লকারটি Chrome বা Edge-এ Sabaq ওয়েবসাইটের (sabaq-study.pages.dev) সঙ্গে কাজ করে।","Sabaq Blocker ডাউনলোড করুন","Chrome বা Edge-এ কীভাবে যোগ করবেন",
+    "ডাউনলোড করা ফাইলটি আনজিপ করুন।","chrome://extensions খুলুন (Edge-এ: edge://extensions) এবং Developer mode চালু করুন।","Load unpacked-এ ক্লিক করে sabaq-blocker ফোল্ডারটি বেছে নিন।",
+    "এই পেজে ফিরে এসে রিলোড করুন। এটি জানাবে যে ব্লকার চালু আছে।","ফোনে অ্যাপ ব্লক করুন",
+    "Android: Settings → Digital Wellbeing & parental controls → Focus mode খুলুন। অ্যাপগুলো বেছে নিন (Facebook, Instagram, Threads, YouTube…), তারপর Turn on now চাপুন, অথবা পড়ার সময়ের জন্য সময়সূচি ঠিক করুন।",
+    "iPhone: Settings → Screen Time → App Limits → Add Limit খুলুন। অ্যাপ বা Social বিভাগ বেছে নিন, ১ মিনিটের মতো ছোট সীমা দিন এবং Add চাপুন। পড়ার সময় সেগুলো লুকাতে Settings → Focus-ও ব্যবহার করতে পারেন।",
+    "এই ফোকাস রাউন্ডে আপনি {n} বার Sabaq ছেড়ে গেছেন। আপনার অ্যাপগুলো অপেক্ষা করতে পারে!","একটি ওয়েবসাইটের ঠিকানা লিখুন, যেমন netflix.com।","সরান"],
+  fr:["Bloqueur d'applis et de sites","Choisis ce qui te distrait. Sabaq le bloque pendant que le minuteur tourne.","Ajoute un site, ex. netflix.com","Ajouter",
+    "Bloquer ces sites pendant le minuteur","Sabaq Blocker est actif dans ce navigateur. Tes sites choisis seront bloqués pendant la concentration.","Blocage en cours, jusqu'à la fin de cette séance.",
+    "Un site web ne peut pas bloquer d'autres sites tout seul. Pour les bloquer sur un ordinateur, ajoute l'extension gratuite Sabaq Blocker à Chrome ou Edge.",
+    "Le bloqueur fonctionne avec le site Sabaq (sabaq-study.pages.dev) dans Chrome ou Edge.","Télécharger Sabaq Blocker","Comment l'ajouter à Chrome ou Edge",
+    "Décompresse le fichier téléchargé.","Ouvre chrome://extensions (dans Edge : edge://extensions) et active le Mode développeur.","Clique sur Charger l'extension non empaquetée et choisis le dossier sabaq-blocker.",
+    "Reviens sur cette page et recharge-la. Elle indiquera que le bloqueur est actif.","Bloquer des applis sur un téléphone",
+    "Android : ouvre Paramètres → Bien-être numérique et contrôle parental → Mode Concentration. Choisis les applis (Facebook, Instagram, Threads, YouTube…), puis appuie sur Activer maintenant, ou programme tes heures d'étude.",
+    "iPhone : ouvre Réglages → Temps d'écran → Limites d'apps → Ajouter une limite. Choisis les apps ou la catégorie Réseaux sociaux, mets une limite courte comme 1 minute et appuie sur Ajouter. Tu peux aussi utiliser Réglages → Concentration pour les masquer pendant que tu étudies.",
+    "Tu as quitté Sabaq {n} fois pendant cette séance. Tes applis peuvent attendre !","Écris l'adresse d'un site, comme netflix.com.","Retirer"],
+  zh:["应用和网站屏蔽","选出让你分心的内容，专注计时期间 Sabaq 会屏蔽它们。","添加网站，例如 netflix.com","添加",
+    "专注计时期间屏蔽这些","此浏览器已启用 Sabaq Blocker，专注期间会屏蔽你选的网站。","正在屏蔽，直到本轮专注结束。",
+    "网站本身无法屏蔽其他网站。要在电脑上屏蔽它们，请在 Chrome 或 Edge 中添加免费的 Sabaq Blocker。",
+    "屏蔽功能需在 Chrome 或 Edge 中配合 Sabaq 网站（sabaq-study.pages.dev）使用。","下载 Sabaq Blocker","如何添加到 Chrome 或 Edge",
+    "解压下载的文件。","打开 chrome://extensions（Edge 中为 edge://extensions），开启“开发者模式”。","点击“加载已解压的扩展程序”，选择 sabaq-blocker 文件夹。",
+    "回到此页面并刷新，会显示屏蔽已启用。","在手机上屏蔽应用",
+    "安卓：打开“设置”→“数字健康和家长控制”→“专注模式”。选择应用（Facebook、Instagram、Threads、YouTube 等），然后点“立即开启”，或为学习时间设置时间表。",
+    "iPhone：打开“设置”→“屏幕使用时间”→“App 限额”→“添加限额”。选择应用或“社交”类别，设置很短的时间（如 1 分钟），然后点“添加”。也可以用“设置”→“专注模式”在学习时隐藏它们。",
+    "本轮专注中你离开了 Sabaq {n} 次。应用可以等一等！","请写网站地址，例如 netflix.com。","移除"]
+};
+Object.keys(BLK_UI).forEach(l=>BLK_KEYS.forEach((k,i)=>{UI[l][k]=BLK_UI[l][i]}));
 
 // Study tools, study plan and voice typing strings, in the order of STUDY_KEYS
 const STUDY_KEYS = ["navHw","navAsk","navTools","tools","tabCards","tabQuiz","tabTimer","topic","topicPh","makeCards","makeQuiz",
@@ -1170,6 +1289,8 @@ function applyUI(){
   render();
   renderHw();
   renderTools();
+  $("blkAddInput").placeholder = t("blkAddPh");
+  blkRender();
 }
 
 /* ---------- Rendering ---------- */
@@ -1739,6 +1860,23 @@ $("makeBtn").addEventListener("click",async()=>{
   finally{toolsBusy=false; btn.disabled=false; btn.textContent = toolTab==="quiz" ? t("makeQuiz") : t("makeCards")}
 });
 
+/* App and site blocker: the sites chosen here are blocked while a focus round runs, by the Sabaq Blocker browser extension
+   (a page can't block other sites itself). On phones the panel shows the system's own app-blocking steps instead. */
+const BLK_SITES = [
+  {k:"facebook",name:"Facebook",d:["facebook.com","fb.com"]}, {k:"instagram",name:"Instagram",d:["instagram.com"]},
+  {k:"threads",name:"Threads",d:["threads.net","threads.com"]}, {k:"youtube",name:"YouTube",d:["youtube.com","youtu.be"]},
+  {k:"tiktok",name:"TikTok",d:["tiktok.com"]}, {k:"x",name:"X (Twitter)",d:["x.com","twitter.com"]},
+  {k:"snapchat",name:"Snapchat",d:["snapchat.com"]}, {k:"reddit",name:"Reddit",d:["reddit.com"]}
+];
+const BLK_DOMAIN = /^(?=.{4,253}$)([a-z0-9-]{1,63}\.)+[a-z]{2,63}$/;
+const IS_PHONE = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+const blkRead=(k,d)=>{try{const v=JSON.parse(store.get(k)||"null");return Array.isArray(v)?v.map(String):d}catch(e){return d}};
+const blk = {
+  picked: blkRead("blk.picked",["facebook","instagram","threads","youtube"]),  // built-in keys and custom domains that are ticked
+  custom: blkRead("blk.custom",[]).filter(d=>BLK_DOMAIN.test(d)),              // websites the student added
+  on: store.get("blk.on")!=="0", ext:false, last:""
+};
+
 /* Focus timer: focus and break lengths are the student's own, in hours and minutes with no upper limit (25 and 5 minutes to start).
    Finished focus time counts for today and for the chosen assignment. */
 const TM_HUGE=1e6, TM_PRESETS=[15,25,45,60,90,120], RING=2*Math.PI*52;  // TM_HUGE only keeps the numbers sane
@@ -1778,6 +1916,8 @@ function renderTimer(){
     b.addEventListener("click",()=>setLen("focus",m)); pre.append(b);
   });
   [...pre.children].forEach(b=>{b.textContent=lenText(Number(b.dataset.min)); b.setAttribute("aria-pressed",String(Number(b.dataset.min)===TM_LEN.focus))});
+  const nudge=$("tmNudge"); nudge.hidden=!tm.leaves; if(tm.leaves) nudge.textContent=t("blkLeft").replace("{n}",tm.leaves);
+  blkSend();
 }
 // A new length applies straight away when that timer is not running, otherwise from the next round.
 function setLen(k, v){
@@ -1834,6 +1974,78 @@ function refreshTimerTasks(){
   sel.value = [...sel.options].some(o=>o.value===cur) ? cur : "";
   renderTimer();
 }
+
+/* ---------- App and site blocker ---------- */
+function blkDomains(){
+  const out=[];
+  BLK_SITES.forEach(s=>{if(blk.picked.includes(s.k)) out.push(...s.d)});
+  blk.custom.forEach(d=>{if(blk.picked.includes(d)) out.push(d)});
+  return out;
+}
+function blkSave(){store.set("blk.picked",JSON.stringify(blk.picked)); store.set("blk.custom",JSON.stringify(blk.custom)); store.set("blk.on",blk.on?"1":"0")}
+// Tells the extension (through its script on this page) what to block and until when; only when that changes.
+function blkSend(){
+  if(!ONLINE_PAGE || IN_CLAUDE) return;
+  const on=blk.on && tm.running && tm.mode==="focus" && blkDomains().length>0;
+  const msg={sabaq:"block", on, sites:on?blkDomains():[], until:on?tm.end:0, lang:ui};
+  const key=JSON.stringify(msg);
+  if(key===blk.last) return;
+  blk.last=key; window.postMessage(msg, location.origin); blkStatus();
+}
+function blkStatus(){
+  const st=$("blkStatus"), active=blk.on && tm.running && tm.mode==="focus" && blkDomains().length>0;
+  let msg="";
+  if(IS_PHONE) msg="";
+  else if(!ONLINE_PAGE || IN_CLAUDE) msg=t("blkWebOnly");
+  else if(blk.ext) msg=active ? t("blkNow") : t("blkExtOn");
+  else msg=t("blkExtOff");
+  st.textContent=msg; st.hidden=!msg; st.classList.toggle("on",blk.ext && active);
+  $("blkPc").hidden = IS_PHONE || blk.ext;
+}
+function blkRender(){
+  const box=$("blkSites"); box.innerHTML="";
+  const chip=(key,label,removable)=>{
+    const lab=document.createElement("label"); lab.className="blk-site";
+    const cb=document.createElement("input"); cb.type="checkbox"; cb.checked=blk.picked.includes(key);
+    cb.addEventListener("change",()=>{blk.picked=cb.checked?[...blk.picked,key]:blk.picked.filter(x=>x!==key); blkSave(); blkSend(); blkStatus()});
+    const sp=document.createElement("span"); sp.textContent=label; sp.dir="ltr";
+    lab.append(cb,sp);
+    if(removable){
+      const x=document.createElement("button"); x.type="button"; x.setAttribute("aria-label",t("blkRemove")+": "+label); x.title=t("blkRemove");
+      x.innerHTML='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M7 7l10 10M17 7L7 17"/></svg>';
+      x.addEventListener("click",e=>{e.preventDefault(); blk.custom=blk.custom.filter(d=>d!==key); blk.picked=blk.picked.filter(d=>d!==key); blkSave(); blkRender(); blkSend()});
+      lab.append(x);
+    }
+    box.append(lab);
+  };
+  BLK_SITES.forEach(s=>chip(s.k,s.name,false));
+  blk.custom.forEach(d=>chip(d,d,true));
+  $("blkOn").checked=blk.on;
+  $("blkPhone").open=IS_PHONE;
+  blkStatus();
+}
+$("blkAddForm").addEventListener("submit",e=>{
+  e.preventDefault();
+  const raw=$("blkAddInput").value.trim().toLowerCase();
+  const d=raw.replace(/^[a-z]+:\/\//,"").replace(/^www\./,"").split(/[\/?#:]/)[0];
+  if(!BLK_DOMAIN.test(d)){$("blkStatus").hidden=false; $("blkStatus").classList.remove("on"); $("blkStatus").textContent=t("blkBad"); $("blkAddInput").focus(); return}
+  if(!blk.custom.includes(d) && !BLK_SITES.some(s=>s.d.includes(d))) blk.custom.push(d);
+  const key=(BLK_SITES.find(s=>s.d.includes(d))||{}).k || d;
+  if(!blk.picked.includes(key)) blk.picked.push(key);
+  $("blkAddInput").value=""; blkSave(); blkRender(); blkSend();
+});
+$("blkOn").addEventListener("change",()=>{blk.on=$("blkOn").checked; blkSave(); blkSend(); blkStatus()});
+// The extension's script answers a ping with "hello"; then resend the current state so a running round is blocked straight away.
+window.addEventListener("message",e=>{
+  if(e.source!==window || !e.data || e.data.sabaqExt!=="hello") return;
+  blk.ext=true; blk.last=""; blkSend(); blkStatus();
+});
+if(ONLINE_PAGE && !IN_CLAUDE) window.postMessage({sabaq:"ping"}, location.origin);
+// Leaving the page during a focus round with the blocker on is counted, and the count is shown on return.
+document.addEventListener("visibilitychange",()=>{
+  if(document.hidden && blk.on && tm.running && tm.mode==="focus") tm.leaves=(tm.leaves||0)+1;
+  if(!document.hidden) renderTimer();
+});
 
 /* ---------- Voice typing for the question ---------- */
 let dict=null, listening=false, dictBase="", dictLang=true;
