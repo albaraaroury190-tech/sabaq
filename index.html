@@ -362,8 +362,12 @@ button.wd:hover{border-color:var(--pen)}
 .seg{display:flex;gap:6px;flex-wrap:wrap}
 .seg button{border:1px solid var(--rule);background:var(--paper);border-radius:8px;padding:6px 12px;cursor:pointer}
 .seg button[aria-pressed="true"]{border-color:var(--pen);background:var(--pen-soft);box-shadow:inset 0 0 0 1px var(--pen)}
-.tm-lens{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.tm-lens input{font-variant-numeric:tabular-nums}
+.tm-lens{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}
+.tm-len{border:0;margin:0;padding:0;min-width:0;display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.tm-len legend{padding:0;margin-bottom:4px;font-size:.9rem;font-weight:700;color:var(--muted)}
+.tm-len label{display:grid;gap:2px;font-size:.8rem;color:var(--muted)}
+.tm-len input{width:100%;font-variant-numeric:tabular-nums}
+.tm-time.long{font-size:2rem}
 .tm-presets{display:flex;flex-wrap:wrap;gap:6px;margin-top:-6px}
 .tm-presets button{border:1px solid var(--rule);background:transparent;border-radius:999px;padding:2px 10px;font-size:.85rem;cursor:pointer;font-variant-numeric:tabular-nums}
 .tm-presets button:hover{border-color:var(--pen);color:var(--pen)}
@@ -596,8 +600,14 @@ button.wd:hover{border-color:var(--pen)}
             <button type="button" id="tmBreakBtn" aria-pressed="false"></button>
           </div>
           <div class="tm-lens">
-            <label class="field"><span data-i18n="focusLen"></span><input type="number" id="tmFocusLen" min="1" max="180" step="1" inputmode="numeric"></label>
-            <label class="field"><span data-i18n="brkLen"></span><input type="number" id="tmBrkLen" min="1" max="60" step="1" inputmode="numeric"></label>
+            <fieldset class="tm-len" id="tmFocusSet"><legend data-i18n="focusLen"></legend>
+              <label><input type="number" id="tmFocusH" min="0" step="1" inputmode="numeric"><span data-i18n="hrsLbl"></span></label>
+              <label><input type="number" id="tmFocusLen" min="0" step="1" inputmode="numeric"><span data-i18n="minsLbl"></span></label>
+            </fieldset>
+            <fieldset class="tm-len" id="tmBrkSet"><legend data-i18n="brkLen"></legend>
+              <label><input type="number" id="tmBrkH" min="0" step="1" inputmode="numeric"><span data-i18n="hrsLbl"></span></label>
+              <label><input type="number" id="tmBrkLen" min="0" step="1" inputmode="numeric"><span data-i18n="minsLbl"></span></label>
+            </fieldset>
           </div>
           <div class="tm-presets" id="tmPresets" role="group"></div>
           <div class="actions">
@@ -818,11 +828,17 @@ const DAY_UI = {
   zh:["当天目标","新目标","例如：复习 20 个单词","添加目标","这一天还没有目标。在下面添加一个吧。","添加当天截止的作业","选择日期","目标","当天截止","删除目标"]
 };
 Object.keys(DAY_UI).forEach(l=>DAY_KEYS.forEach((k,i)=>{UI[l][k]=DAY_UI[l][i]}));
+// Timer length strings: focus length, break length, the hours and minutes boxes, and the short word for hours
+const TM_LEN_KEYS = ["focusLen","brkLen","hrsLbl","minsLbl","hShort"];
 const TM_LEN_UI = {
-  en:["Focus (minutes)","Break (minutes)"], ar:["التركيز (بالدقائق)","الاستراحة (بالدقائق)"],
-  es:["Concentración (minutos)","Descanso (minutos)"], ur:["توجہ (منٹ)","آرام (منٹ)"],
-  hi:["फ़ोकस (मिनट)","ब्रेक (मिनट)"], bn:["ফোকাস (মিনিট)","বিরতি (মিনিট)"],
-  fr:["Concentration (minutes)","Repos (minutes)"], zh:["专注（分钟）","休息（分钟）"]
+  en:["Focus length","Break length","Hours","Minutes","h"],
+  ar:["مدة التركيز","مدة الاستراحة","ساعات","دقائق","س"],
+  es:["Duración de la concentración","Duración del descanso","Horas","Minutos","h"],
+  ur:["توجہ کا دورانیہ","آرام کا دورانیہ","گھنٹے","منٹ","گھنٹہ"],
+  hi:["फ़ोकस की अवधि","ब्रेक की अवधि","घंटे","मिनट","घं"],
+  bn:["ফোকাসের সময়","বিরতির সময়","ঘণ্টা","মিনিট","ঘণ্টা"],
+  fr:["Durée de concentration","Durée de la pause","Heures","Minutes","h"],
+  zh:["专注时长","休息时长","小时","分钟","小时"]
 };
 // Repeated homework strings, in the order of REP_KEYS
 const REP_KEYS = ["hwRepeat","eraseRepeats","hwAlready","hwErased"];
@@ -850,7 +866,7 @@ const IMG_UI = {
   zh:["添加照片或截图","也可以粘贴截图（Ctrl+V）或把图片拖到这里。","正在读取第 {a}–{b} 张图片（共 {n} 张）…","这个文件不是图片。请使用照片或截图（JPG、PNG、WebP 或 GIF）。"]
 };
 Object.keys(IMG_UI).forEach(l=>IMG_KEYS.forEach((k,i)=>{UI[l][k]=IMG_UI[l][i]}));
-Object.keys(TM_LEN_UI).forEach(l=>{UI[l].focusLen=TM_LEN_UI[l][0]; UI[l].brkLen=TM_LEN_UI[l][1]});
+Object.keys(TM_LEN_UI).forEach(l=>TM_LEN_KEYS.forEach((k,i)=>{UI[l][k]=TM_LEN_UI[l][i]}));
 
 // Study tools, study plan and voice typing strings, in the order of STUDY_KEYS
 const STUDY_KEYS = ["navHw","navAsk","navTools","tools","tabCards","tabQuiz","tabTimer","topic","topicPh","makeCards","makeQuiz",
@@ -1723,39 +1739,51 @@ $("makeBtn").addEventListener("click",async()=>{
   finally{toolsBusy=false; btn.disabled=false; btn.textContent = toolTab==="quiz" ? t("makeQuiz") : t("makeCards")}
 });
 
-/* Focus timer: focus and break lengths are the student's own (25 and 5 minutes to start). Finished focus time counts for today and for the chosen assignment. */
-const TM_MAX={focus:180,brk:60}, TM_PRESETS=[15,25,45,60,90], RING=2*Math.PI*52;
-const tmLen=(k,d)=>{const n=Math.round(Number(store.get("tm."+k)));return n>=1&&n<=TM_MAX[k]?n:d};
+/* Focus timer: focus and break lengths are the student's own, in hours and minutes with no upper limit (25 and 5 minutes to start).
+   Finished focus time counts for today and for the chosen assignment. */
+const TM_HUGE=1e6, TM_PRESETS=[15,25,45,60,90,120], RING=2*Math.PI*52;  // TM_HUGE only keeps the numbers sane
+const tmLen=(k,d)=>{const n=Math.round(Number(store.get("tm."+k)));return n>=1&&n<=TM_HUGE?n:d};
+const TM_IN={focus:["tmFocusH","tmFocusLen","tmFocusSet"], brk:["tmBrkH","tmBrkLen","tmBrkSet"]};
 const TM_LEN={focus:tmLen("focus",25), brk:tmLen("brk",5)};
 let tm={mode:"focus", total:TM_LEN.focus*60, left:TM_LEN.focus*60, end:0, running:false, iv:0}, audio=null;
 $("tmRing").style.strokeDasharray=String(RING);
 function focusToday(){return Number(store.get("focus."+todayISO()))||0}
-function mmss(s){return String(Math.floor(s/60)).padStart(2,"0")+":"+String(s%60).padStart(2,"0")}
+function mmss(s){
+  const h=Math.floor(s/3600), m=Math.floor(s%3600/60), p=n=>String(n).padStart(2,"0");
+  return (h ? h+":"+p(m) : p(m))+":"+p(s%60);
+}
+// A length in minutes as words: "25 min", "1 h", "2 h 30 min"
+function lenText(min){
+  const h=Math.floor(min/60), m=min%60;
+  return h ? h+" "+t("hShort")+(m ? " "+m+" "+t("minLbl") : "") : m+" "+t("minLbl");
+}
 function renderTimer(){
-  $("tmTime").textContent=mmss(tm.left);
+  $("tmTime").textContent=mmss(tm.left); $("tmTime").classList.toggle("long",tm.left>=3600);
   $("tmMode").textContent = tm.mode==="focus" ? t("focus") : t("brk");
   $("tmRing").style.strokeDashoffset=String(RING*(1-tm.left/tm.total));
   $("dial").classList.toggle("break",tm.mode==="brk");
   $("tmStart").textContent = tm.running ? t("pause") : t("start");
-  $("tmFocusBtn").textContent=t("focus")+" · "+TM_LEN.focus; $("tmBreakBtn").textContent=t("brk")+" · "+TM_LEN.brk;
+  $("tmFocusBtn").textContent=t("focus")+" · "+lenText(TM_LEN.focus); $("tmBreakBtn").textContent=t("brk")+" · "+lenText(TM_LEN.brk);
   $("tmFocusBtn").setAttribute("aria-pressed",String(tm.mode==="focus")); $("tmBreakBtn").setAttribute("aria-pressed",String(tm.mode==="brk"));
   $("tmToday").textContent=focusToday();
   const sel=$("tmTask"); $("tmFor").textContent = sel.value ? sel.options[sel.selectedIndex].textContent : "";
-  const fl=$("tmFocusLen"), bl=$("tmBrkLen");
-  if(document.activeElement!==fl) fl.value=TM_LEN.focus;
-  if(document.activeElement!==bl) bl.value=TM_LEN.brk;
+  // Fill the hours and minutes boxes, except while the student is typing in that pair
+  Object.keys(TM_IN).forEach(k=>{
+    const [h,m,set]=TM_IN[k].map($);
+    if(!set.contains(document.activeElement)){h.value=Math.floor(TM_LEN[k]/60); m.value=TM_LEN[k]%60}
+  });
   const pre=$("tmPresets"); pre.setAttribute("aria-label",t("focusLen"));
   if(!pre.children.length) TM_PRESETS.forEach(m=>{
     const b=document.createElement("button"); b.type="button"; b.dataset.min=m;
     b.addEventListener("click",()=>setLen("focus",m)); pre.append(b);
   });
-  [...pre.children].forEach(b=>{b.textContent=b.dataset.min+" "+t("minLbl"); b.setAttribute("aria-pressed",String(Number(b.dataset.min)===TM_LEN.focus))});
+  [...pre.children].forEach(b=>{b.textContent=lenText(Number(b.dataset.min)); b.setAttribute("aria-pressed",String(Number(b.dataset.min)===TM_LEN.focus))});
 }
 // A new length applies straight away when that timer is not running, otherwise from the next round.
 function setLen(k, v){
   const n=Math.round(Number(v));
   if(!(n>=1)) {renderTimer(); return}
-  TM_LEN[k]=Math.min(TM_MAX[k],n); store.set("tm."+k,String(TM_LEN[k]));
+  TM_LEN[k]=Math.min(TM_HUGE,n); store.set("tm."+k,String(TM_LEN[k]));
   if(tm.mode===k && !tm.running) setMode(k); else renderTimer();
 }
 function setMode(m){clearInterval(tm.iv); tm={mode:m,total:TM_LEN[m]*60,left:TM_LEN[m]*60,end:0,running:false,iv:0}; renderTimer()}
@@ -1790,8 +1818,13 @@ $("tmReset").addEventListener("click",()=>setMode(tm.mode));
 $("tmFocusBtn").addEventListener("click",()=>setMode("focus"));
 $("tmBreakBtn").addEventListener("click",()=>setMode("brk"));
 $("tmTask").addEventListener("change",renderTimer);
-$("tmFocusLen").addEventListener("change",e=>setLen("focus",e.target.value));
-$("tmBrkLen").addEventListener("change",e=>setLen("brk",e.target.value));
+// Hours and minutes add up, so 150 minutes or 2 hours 30 minutes give the same length; it is tidied once the boxes are left.
+Object.keys(TM_IN).forEach(k=>{
+  const [h,m,set]=TM_IN[k].map($);
+  const apply=()=>setLen(k,(Math.max(0,Number(h.value)||0))*60+Math.max(0,Number(m.value)||0));
+  h.addEventListener("change",apply); m.addEventListener("change",apply);
+  set.addEventListener("focusout",e=>{if(!set.contains(e.relatedTarget)) setTimeout(renderTimer,0)});
+});
 function refreshTimerTasks(){
   const sel=$("tmTask"), cur=sel.value; sel.innerHTML="";
   const any=document.createElement("option"); any.value=""; any.textContent=t("nothing"); sel.append(any);
