@@ -2000,7 +2000,7 @@ function blkStatus(){
   else if(blk.ext) msg=active ? t("blkNow") : t("blkExtOn");
   else msg=t("blkExtOff");
   st.textContent=msg; st.hidden=!msg; st.classList.toggle("on",blk.ext && active);
-  $("blkPc").hidden = IS_PHONE || blk.ext;
+  $("blkPc").hidden = IS_PHONE || blk.ext || IN_CLAUDE || !ONLINE_PAGE;  // the download only works on the Sabaq website
 }
 function blkRender(){
   const box=$("blkSites"); box.innerHTML="";
