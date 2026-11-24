@@ -10,7 +10,8 @@ A homework helper for students, with the page in English, العربية, Españ
 
 - Homework list with tickboxes, due dates and reminders
 - A schedule of what is due each day: tap a day to see it and set goals for it
-- Help with any assignment, including from a photo: step by step, hints, check my work, improve, practice, summary or translate
+- Help with any assignment, including from photos: step by step, hints, check my work, improve, suggest edits, practice, summary, analyse or translate
+- Suggest edits: an AI editor that leaves your text exactly as you wrote it and highlights each suggested change on it
 - An English translation under any answer, or under every answer
 - Quran verses in answers come word for word from the alquran.cloud database, with a published translation
 - Study plans, flashcards and quizzes made from a topic or class notes

@@ -149,6 +149,14 @@ textarea::placeholder{color:var(--muted);opacity:.8}
 .q{min-width:0}
 .q .who{font-family:var(--font-hand);color:var(--muted);font-size:1.2rem;line-height:1}
 .q p{margin:2px 0 0;font-weight:700;white-space:pre-wrap;overflow-wrap:anywhere}
+.ed-mark{background:var(--hi);color:inherit;border-radius:3px;padding:0 1px;cursor:pointer;text-decoration:underline wavy var(--margin) 1px;text-underline-offset:4px}
+.ed-mark sup{font-size:.65em;color:var(--margin);margin-inline-start:1px}
+.ed-mark.on{outline:2px solid var(--pen);outline-offset:1px}
+.q p.ed-hint{font-weight:400;font-size:.85rem;color:var(--muted);white-space:normal;margin-top:6px}
+.ed-tip{margin-top:6px;padding:8px 12px;border-inline-start:3px solid var(--pen);background:var(--pen-soft);border-radius:8px;font-size:.95rem;overflow-wrap:anywhere}
+.ed-from{text-decoration:line-through;color:var(--muted)}
+.ed-to{font-weight:700;color:var(--ok)}
+.ed-why{display:block;color:var(--muted);font-size:.9rem}
 .q img{margin-top:8px;max-height:140px;width:auto;border-radius:6px;border:1px solid var(--rule)}
 .a{min-width:0;overflow-wrap:break-word;padding-bottom:6px;border-bottom:1px dashed var(--rule)}
 /* English translation shown under an answer */
@@ -1041,7 +1049,19 @@ const ANSWER_LANGS = [
 const RTL = new Set(["ar","ur","fa","ps"]);
 const SUBJECTS = ["math","science","writing","history","computing","other"];
 const LEVELS = ["primary","middle","high","uni"];
-const TASKS = ["steps","hints","check","improve","practice","summary","analyze","translate"];
+const TASKS = ["steps","hints","check","improve","edit","practice","summary","analyze","translate"];
+// The editor task: its chip, then the note under the student's text, which is shown unchanged with the suggestions marked
+const EDIT_UI = {
+  en:["Suggest edits","Your text stays exactly as you wrote it. The highlights are suggested edits: tap one to see it."],
+  ar:["اقترح تعديلات","يبقى نصّك كما كتبته تمامًا. الأجزاء المظلّلة تعديلات مقترحة: اضغط على أيٍّ منها لتراه."],
+  es:["Sugiere cambios","Tu texto queda tal como lo escribiste. Lo resaltado son cambios sugeridos: toca uno para verlo."],
+  ur:["ترامیم تجویز کریں","آپ کا متن بالکل ویسا ہی رہتا ہے جیسا آپ نے لکھا۔ نمایاں حصے تجویز کردہ ترامیم ہیں: دیکھنے کے لیے کسی پر ٹیپ کریں۔"],
+  hi:["बदलाव सुझाएँ","आपका लेख बिल्कुल वैसा ही रहता है जैसा आपने लिखा। हाइलाइट किए गए हिस्से सुझाए गए बदलाव हैं: देखने के लिए किसी पर टैप करें।"],
+  bn:["সংশোধন প্রস্তাব করুন","আপনার লেখা ঠিক যেমন লিখেছেন তেমনই থাকে। হাইলাইট করা অংশগুলো প্রস্তাবিত পরিবর্তন: দেখতে যেকোনোটিতে ট্যাপ করুন।"],
+  fr:["Suggère des corrections","Ton texte reste exactement tel que tu l'as écrit. Les passages surlignés sont des modifications suggérées : touches-en un pour la voir."],
+  zh:["批改建议","你的原文保持不变。高亮部分是修改建议，点一下即可查看。"]
+};
+Object.keys(EDIT_UI).forEach(l=>{UI[l].edit=EDIT_UI[l][0]; UI[l].edHint=EDIT_UI[l][1]});
 const TRANSLATE_UI = {en:"Translate",ar:"ترجم",es:"Traduce",ur:"ترجمہ کریں",hi:"अनुवाद करें",bn:"অনুবাদ করুন",fr:"Traduis",zh:"翻译"};
 Object.keys(TRANSLATE_UI).forEach(l=>{UI[l].translate=TRANSLATE_UI[l]});
 const ANALYZE_UI = {en:"Analyse",ar:"حلّل",es:"Analiza",ur:"تجزیہ کریں",hi:"विश्लेषण करें",bn:"বিশ্লেষণ করুন",fr:"Analyse",zh:"分析"};
@@ -1078,6 +1098,7 @@ const TASK_RULES = {
   hints:"Do NOT give the final answer. Give 2 to 4 hints, from gentle to more specific, that lead the student to solve it themselves. End by inviting them to send their attempt.",
   check:"The student has included their own answer or working. Check it carefully: say clearly what is right and what is wrong, explain each mistake, and show the correct method. If no attempt is included, ask the student to send their working.",
   improve:"Give feedback on the student's writing: first 2 or 3 things that work well, then the most important improvements (grammar, structure, clarity, argument) with short before/after examples. Then give a corrected version that keeps the student's own ideas and voice.",
+  edit:"Act as an editor of the student's text. Do NOT rewrite it and do NOT give a corrected, improved or full version of it: the student keeps their original text exactly as written and decides what to change. Go through the text from start to end and list your suggested edits as a numbered list, in the order they appear. Write each edit on one line in exactly this form: \"exact words from the text\" → \"suggested words\" — short reason. The words in the first quotes must be copied character for character from the student's text: only the few words that change, at most one sentence. Be thorough: include every mistake in spelling, grammar and punctuation, even small ones like a missing accent or hamza, then word choice and clarity. After the list, under a short heading, give 1 to 3 bigger suggestions on structure, flow or argument, described in words without rewriting the text. If the text has no mistakes, say so. Do not add a practice exercise.",
   practice:"Write 5 practice questions on this topic, from easier to harder, at the student's level. Put the answers, each with a one-line explanation, in a separate section at the end.",
   summary:"Summarise the text or topic clearly: the main idea in one sentence, then the key points as a bulleted list, then key terms with short definitions.",
   analyze:"Analyse what the student gave (a text, picture, chart, data, experiment or problem) under clear headings. Start with what it is and its main idea or purpose. Break it into its parts and explain how they connect. Then go deeper: for a literary, historical or religious text, its themes, language, style and context, backed by short quotes; for a chart, data or an experiment, the trends, comparisons and what they show, with figures; for a problem, what is given, what is asked and which concepts and methods it needs. Note any strengths, weaknesses or open questions, and finish with a short conclusion on what it shows and why it matters.",
@@ -1154,7 +1175,7 @@ function webSample(){
   }
   const sample=async(turns, opts={})=>{
     const code=opts.lang||$("answerLang").value, task=(document.querySelector('input[name="task"]:checked')||{}).value;
-    const keep=opts.keepWords!==undefined ? opts.keepWords : task==="translate";
+    const keep=opts.keepWords!==undefined ? opts.keepWords : task==="translate" || task==="edit";
     const clean=s=>fixScript(s.replace(WEB_CUT,""), code, keep);
     const body={messages:turns.map(m=>({role:m.role,content:String(m.content)})), lang:langInfo(code)[2]};
     if(opts.images && opts.images.length) body.images=await Promise.all([...opts.images].slice(0,4).map(photoData));
@@ -1395,11 +1416,71 @@ function quranize(text, code){
     return "\n\n> "+verse+" ("+ref+")"+(tr?"\n>\n> "+tr:"")+"\n\n";
   });
 }
-function questionEl(text, imgs){
+/* ---------- The editor ----------
+   The editor's answer lists each edit as "exact words" → "suggested words" — reason. The student's text is shown
+   exactly as written, with the words each edit refers to highlighted; tapping one shows the suggestion. */
+const ED_OPEN = "\"“«„「『", ED_CLOSE = "\"”»“」』";
+const ED_STRICT = new RegExp("^["+ED_OPEN+"]([^"+ED_CLOSE+"]+)["+ED_CLOSE+"]\\s*(?:→|->|=>|⟶|←)\\s*(?:["+ED_OPEN+"]([^"+ED_CLOSE+"]*)["+ED_CLOSE+"])?\\s*(?:[—–:→-]\\s*)?(.*)$");
+const ED_LOOSE = /^(.+?)\s*(?:→|->|=>|⟶|←)\s*(.*?)\s*(?:\s[—–-]\s|:\s|$)(.*)$/;
+function parseEdits(text){
+  const out=[];
+  String(text).split("\n").forEach(line=>{
+    const l=line.replace(/\*\*|__|`/g,"").replace(/^\s*(?:[-*+•]|\p{Nd}+[.)٫،-])\s*/u,"").trim();
+    const m=l.match(ED_STRICT) || l.match(ED_LOOSE);
+    if(!m) return;
+    const from=m[1].trim().replace(new RegExp("^["+ED_OPEN+"]|["+ED_CLOSE+"]$","g"),"");
+    const to=(m[2]||"").trim().replace(new RegExp("^["+ED_OPEN+"]|["+ED_CLOSE+"]$","g"),"");
+    if(from) out.push({from, to, why:(m[3]||"").trim()});
+  });
+  return out;
+}
+// Where each edit's words are in the text: case and spacing may differ, and edits come in reading order, so look
+// after the previous one first. Edits whose words aren't in the text, or overlap another, are left unmarked.
+function findEdits(text, edits){
+  const spots=[]; let after=0;
+  edits.forEach((ed,i)=>{
+    const re=new RegExp(ed.from.split(/\s+/).map(w=>w.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")).join("\\s+"),"giu");
+    const hit=s=>{re.lastIndex=s; for(let m;(m=re.exec(text));){const a=m.index,b=a+m[0].length; if(b>a && !spots.some(x=>a<x.b&&b>x.a)) return {a,b}; re.lastIndex=a+1} return null};
+    const at=hit(after)||hit(0);
+    if(at){spots.push({...at,n:i+1,ed}); after=at.b}
+  });
+  return spots.sort((x,y)=>x.a-y.a);
+}
+function editedText(text, edits){
+  const box=document.createElement("div"), p=document.createElement("p"), tip=document.createElement("div");
+  p.dir="auto"; tip.className="ed-tip"; tip.dir="auto"; tip.hidden=true; tip.setAttribute("aria-live","polite");
+  const spots=findEdits(text, edits); let at=0;
+  spots.forEach(s=>{
+    p.append(text.slice(at,s.a));
+    const mk=document.createElement("mark"); mk.className="ed-mark"; mk.tabIndex=0; mk.setAttribute("role","button");
+    mk.textContent=text.slice(s.a,s.b);
+    const n=document.createElement("sup"); n.textContent=s.n; mk.append(n);
+    const show=()=>{
+      const was=mk.classList.contains("on");
+      box.querySelectorAll(".ed-mark.on").forEach(x=>x.classList.remove("on"));
+      tip.hidden=was; if(was) return;
+      mk.classList.add("on"); tip.textContent="";
+      const num=document.createElement("b"); num.textContent=s.n+". ";
+      const from=document.createElement("span"); from.className="ed-from"; from.textContent=s.ed.from;
+      const to=document.createElement("span"); to.className="ed-to"; to.textContent=s.ed.to;
+      tip.append(num, from, " → ", to);
+      if(s.ed.why){const w=document.createElement("span"); w.className="ed-why"; w.textContent=s.ed.why; tip.append(w)}
+    };
+    mk.addEventListener("click",show);
+    mk.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault(); show()}});
+    p.append(mk); at=s.b;
+  });
+  p.append(text.slice(at));
+  box.append(p);
+  if(spots.length){const h=document.createElement("p"); h.className="ed-hint"; h.textContent=t("edHint"); box.append(h, tip)}
+  return box;
+}
+function questionEl(text, imgs, edits){
   const q=document.createElement("div"); q.className="q";
   const who=document.createElement("div"); who.className="who"; who.textContent=t("you");
   q.append(who);
-  if(text){const p=document.createElement("p"); p.dir="auto"; p.textContent=text; q.append(p)}
+  if(text && edits && edits.length) q.append(editedText(text, edits));
+  else if(text){const p=document.createElement("p"); p.dir="auto"; p.textContent=text; q.append(p)}
   if(imgs && imgs.length){
     const row=document.createElement("div"); row.className="q-imgs";
     imgs.forEach(src=>{const i=document.createElement("img"); i.src=src; i.alt=""; row.append(i)});
@@ -1415,8 +1496,9 @@ function render(){
     const note=document.createElement("small"); note.textContent=t("exampleNote"); tag.append(note);
     page.append(tag, questionEl(t("exQ")), answerEl(t("exA"), ui));
   } else {
-    thread.forEach(e=>{
-      if(e.role==="user") page.append(questionEl(e.text, e.imgs));
+    thread.forEach((e,i)=>{
+      const next=thread[i+1];
+      if(e.role==="user") page.append(questionEl(e.text, e.imgs, e.task==="edit" && next && next.done && next.text ? parseEdits(next.text) : null));
       else if(e.pending && !e.text){
         const th=document.createElement("div"); th.className="thinking";
         th.innerHTML='<span class="dots" aria-hidden="true"><i></i><i></i><i></i></span>';
@@ -1478,7 +1560,8 @@ function buildPrompt(q){
     "- Use Markdown: short paragraphs, **bold** step titles, numbered or bulleted lists where they help.",
     "- Put every equation, formula, chemical formula and short code expression inside backticks, like `2x + 6 = 14`. Use plain Unicode maths symbols (×, ÷, −, ², √, π, ≤). Never use LaTeX or dollar-sign maths.",
     "- Put longer code in fenced code blocks.",
-    "- Write quotations in "+english+" too, never in another language.",
+    task==="edit" ? "- Copy the quoted words from the student's text exactly, in the language they are written in, and write each suggested replacement in that same language. Write the reasons and everything else in "+english+"."
+      : "- Write quotations in "+english+" too, never in another language.",
     ...(IN_CLAUDE ? [
     "- When quoting the Quran, give the verse in Arabic"+(code==="ar"?"":" followed by its meaning in "+english)+", with its surah and verse number, like (Al-Baqarah 2:129).",
     "- Quote a verse only when you are sure of its exact wording and of who said it and where it is. Never attribute a verse to a different prophet, person or surah. If you are not sure, describe it in your own words instead of quoting it. If the student's own text quotes or names a verse, keep the student's verse and don't swap it for another."
@@ -1489,7 +1572,7 @@ function buildPrompt(q){
     "- Quote a hadith only when you are sure of its wording and source, and name the collection it is in.",
     "- Match the explanation to the student's level and define any technical word the first time you use it.",
     "- No greeting and no sign-off.",
-    "- Unless you were told to give hints only, end with one short line with a bold title that gives a similar practice exercise or a question to check understanding.",
+    ...(task==="edit" ? [] : ["- Unless you were told to give hints only, end with one short line with a bold title that gives a similar practice exercise or a question to check understanding."]),
     "If the assignment is unclear or a picture is hard to read, say what you can read and ask for what is missing.",
     "",
     "The student's assignment:",
@@ -1560,7 +1643,7 @@ async function run(extra){
     if(c==="image_rejected"){clearPhoto()}
     if(c!=="cancelled") setStatus(msgFor(c));
   }finally{
-    entry.pending=false; busy=false; ctl=null;
+    entry.pending=false; entry.done=true; busy=false; ctl=null;
     $("askBtn").disabled=false; $("stopBtn").hidden=true;
     render();
   }
@@ -1609,7 +1692,7 @@ $("askForm").addEventListener("submit",e=>{
   if(!q && !photos.length){setStatus(t("empty")); $("question").focus(); return}
   if(tts && speaking) tts.stop();
   turns=[{role:"user",content:buildPrompt(q)}];
-  thread=[{role:"user",text:q,imgs:photos.map(p=>p.thumb).filter(Boolean)}];
+  thread=[{role:"user",text:q,imgs:photos.map(p=>p.thumb).filter(Boolean),task:document.querySelector('input[name="task"]:checked').value}];
   showingExample=false;
   run(photos.length ? {images:photos.map(p=>p.file)} : null);
 });
